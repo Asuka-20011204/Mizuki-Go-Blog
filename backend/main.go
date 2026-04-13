@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"my-blog-backend/config"
 	"my-blog-backend/controller"
+	"my-blog-backend/middleware"
 	"my-blog-backend/models"
-	"my-blog-backend/service" // 确保导入了 service 包
+	"my-blog-backend/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -12,24 +15,27 @@ import (
 )
 
 func main() {
-	// 1. 初始化数据库连接 (Model 层)
-	dsn := "root:Wangzixu880314.@tcp(127.0.0.1:3306)/blog_db?charset=utf8mb4&parseTime=True&loc=Local"
+	// 1. 加载配置
+	config.LoadConfig("config.yaml")
+
+	// 2. 使用配置连接数据库
+	dsn := config.GlobalConfig.Database.Dsn
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("数据库连接失败: %v", err)
 	}
 
-	// 自动同步表结构
-	if err := db.AutoMigrate(&models.Post{}); err != nil {
-		log.Fatalf("数据库迁移失败，%v", err)
-	}
+	// 3. 初始化数据 (包含创建初始用户)
+	models.InitDatabase(db)
 
 	// 2. 链式依赖注入 (MVC 核心)
 	// 第一步：将 db 注入 Service
 	postService := &service.PostService{DB: db}
+	authService := &service.AuthService{DB: db}
+	systemService := &service.SystemService{}
 	// 第二步：将 service 注入 Controller
 	postCtrl := &controller.PostController{PostService: postService}
-	systemService := &service.SystemService{}
+	authCtrl := &controller.AuthController{AuthService: authService}
 	systemCtrl := &controller.SystemController{SystemService: systemService}
 
 	// 3. 设置 Gin 路由
@@ -39,15 +45,13 @@ func main() {
 	r.Use(corsMiddleware())
 
 	// 业务接口组
-	api := r.Group("/api")
-	{
-		api.POST("/posts", postCtrl.HandleCreatePost)
-		api.POST("/upload", postCtrl.HandleUpload)
-	}
-
+	r.POST("/api/login", authCtrl.Login)
 	// 管理接口组
 	admin := r.Group("/api/admin")
+	admin.Use(middleware.JWTAuth())
 	{
+		admin.POST("/posts", postCtrl.HandleCreatePost)
+		admin.POST("/upload", postCtrl.HandleUpload)
 		admin.POST("/rebuild", systemCtrl.HandleRebuild)
 		admin.GET("/posts", postCtrl.ListPosts)
 		admin.GET("/posts/:slug", postCtrl.GetPostDetail) // 新增这一行
@@ -56,8 +60,8 @@ func main() {
 	r.Static("/preview-cache", "../frontend/public/preview-cache")
 
 	// 4. 启动服务器
-	log.Println("Go 后端 MVC 服务已启动，监听端口 :8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Printf("Go 后端 MVC 服务已启动，监听端口 :%d", config.GlobalConfig.Server.Port)
+	if err := r.Run(fmt.Sprintf(":%d", config.GlobalConfig.Server.Port)); err != nil {
 		log.Fatalf("服务启动失败: %v", err)
 	}
 }

@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  mode: "debug"
+
+database:
+  dsn: "root:Wangzixu880314.@tcp(127.0.0.1:3306)/blog_db?charset=utf8mb4&parseTime=True&loc=Local"
+
+jwt:
+  secret: "mizuki_secret_key_random_string" # 建议修改为复杂的字符串
+  expire: 720
+
+system:
+  posts_dir: "../frontend/src/content/posts"
+  preview_dir: "../frontend/public/preview-cache"
+  frontend_dir: "../frontend"
+
+# 初始所有者配置
+init_data:
+  owner_username: "1425147798"
+  owner_password: "wangzixu880314"
+  owner_qq: "1425147798"
+  owner_phone: "13179967280"
