@@ -28,3 +28,5 @@ VALUES (
     'lang:longtext',
     'pinned:tinyint'
   );ALTER TABLE posts ADD COLUMN description LONGTEXT;
+
+  DROP TABLE IF EXISTS users

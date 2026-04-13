@@ -45,6 +45,9 @@ import { Icon } from "astro-icon/components";
                 <a href="/" data-no-swup class="flex items-center gap-2 text-sm text-gray-500 hover:text-[var(--primary)] transition">
                     <Icon name="material-symbols:arrow-back" /> 返回前台
                 </a>
+                <button id="logout-btn" class="flex items-center gap-2 text-sm text-red-400 hover:text-red-500 transition mt-4">
+                    <Icon name="material-symbols:logout-rounded" /> 退出登录
+                </button>
             </div>
         </aside>
 
@@ -158,6 +161,30 @@ import { Icon } from "astro-icon/components";
 </style>
 
 <script>
+    // 封装认证请求
+    async function authFetch(url, options: any = {}) {
+        const token = localStorage.getItem('mizuki_token');
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        };
+        
+        const response = await fetch(url, { ...options, headers });
+        
+        // 如果后端返回 401，说明 Token 失效了，直接踢回登录页
+        if (response.status === 401) {
+            localStorage.removeItem('mizuki_token');
+            window.location.href = '/admin/login/';
+            throw new Error("Unauthorized");
+        }
+        
+        return response;
+    }
+    const token = localStorage.getItem('mizuki_token')
+    if (!token) {
+        //如果没有token踢回登录页
+        window.location.href = '/admin/login/'
+    }
     // --- 1. 侧边栏 Tab 切换逻辑 (补全) ---
     const navItems = document.querySelectorAll('.nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -190,7 +217,16 @@ import { Icon } from "astro-icon/components";
         if (!tableBody) return;
 
         try {
-            const res = await fetch('http://localhost:8080/api/admin/posts');
+            const res = await authFetch('http://localhost:8080/api/admin/posts',{
+                header:{
+                    'Authorization': `Bearer ${localStorage.getItem('mizuki_token')}`
+                }
+            });
+            if (res.status === 401) {
+                alert("登陆已过期，请重新登录");
+                window.location.href = '/admin/login/';
+                return;
+            }
             const posts = await res.json();
 
             // 注意：此处 post.Title, post.Category, post.Slug 必须首字母大写
@@ -225,10 +261,13 @@ import { Icon } from "astro-icon/components";
     (window as any).handleDelete = async (slug: string) => {
         if(!confirm(`确定要彻底删除文章 [${slug}] 吗？\n这将同时删除数据库记录和磁盘文件！`)) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/admin/posts/${slug}`, { method: 'DELETE' });
+            const res = await authFetch(`http://localhost:8080/api/admin/posts/${slug}`, { method: 'DELETE' });
             if(res.ok) {
                 alert("物理同步删除成功");
                 refreshPostList();
+            } else {
+                const err = await res.json();
+                alert("删除失败：" + (err.error || "未知错误"));
             }
         } catch(e) {
             alert("请求失败");
@@ -246,7 +285,7 @@ import { Icon } from "astro-icon/components";
             rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
 
             try {
-                const res = await fetch('http://localhost:8080/api/admin/rebuild', { 
+                const res = await authFetch('http://localhost:8080/api/admin/rebuild', { 
                     method: 'POST' 
                 });
                 
@@ -269,4 +308,12 @@ import { Icon } from "astro-icon/components";
 
     // 初始加载
     refreshPostList();
+    //退出登录按钮
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+        if(confirm('确定要退出管理系统吗？')) {
+            localStorage.removeItem('mizuki_token');
+            localStorage.removeItem('mizuki_user');
+            window.location.href = '/admin/login/';
+        }
+    });
 </script>

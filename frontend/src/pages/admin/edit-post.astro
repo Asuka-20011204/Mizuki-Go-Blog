@@ -66,6 +66,26 @@ import Layout from '../../layouts/Layout.astro';
   import Vditor from 'vditor';
   let vditor;
 
+    // 封装认证请求
+    async function authFetch(url, options = {}) {
+        const token = localStorage.getItem('mizuki_token');
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        };
+        
+        const response = await fetch(url, { ...options, headers });
+        
+        // 如果后端返回 401，说明 Token 失效了，直接踢回登录页
+        if (response.status === 401) {
+            localStorage.removeItem('mizuki_token');
+            window.location.href = '/admin/login/';
+            throw new Error("Unauthorized");
+        }
+        
+        return response;
+    }
+
   // 去除字符串开头的 frontmatter 块（如果存在），返回纯正文
   function stripFrontmatter(markdown) {
   const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
@@ -160,7 +180,7 @@ import Layout from '../../layouts/Layout.astro';
   // ----- 加载文章数据 -----
   async function loadPostData() {
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/posts/${slug}`);
+      const res = await authFetch(`http://localhost:8080/api/admin/posts/${slug}`);
       const post = await res.json();
       console.log("Original data:", post);
 
@@ -244,7 +264,7 @@ import Layout from '../../layouts/Layout.astro';
     };
 
   try {
-    const res = await fetch('http://localhost:8080/api/posts', {
+    const res = await authFetch('http://localhost:8080/api/admin/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

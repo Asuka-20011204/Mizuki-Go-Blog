@@ -95,6 +95,25 @@ import Layout from '../../layouts/Layout.astro';
 
   <script is:inline src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
   <script is:inline>
+  // 封装认证请求
+    async function authFetch(url, options = {}) {
+        const token = localStorage.getItem('mizuki_token');
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        };
+        
+        const response = await fetch(url, { ...options, headers });
+        
+        // 如果后端返回 401，说明 Token 失效了，直接踢回登录页
+        if (response.status === 401) {
+            localStorage.removeItem('mizuki_token');
+            window.location.href = '/admin/login/';
+            throw new Error("Unauthorized");
+        }
+        
+        return response;
+    }
     // 1. 初始化 Vditor
     const initVditor = () => {
       window.vditor = new Vditor('vditor', {
@@ -103,7 +122,7 @@ import Layout from '../../layouts/Layout.astro';
         theme: document.documentElement.classList.contains('dark') ? 'dark' : 'classic',
         preview: { theme: { current: 'light' } },
         upload: {
-          url: 'http://localhost:8080/api/upload',
+          url: 'http://localhost:8080/api/admin/upload',
           handler(files) {
             const slugInput = document.getElementById('post-slug');
             const slug = slugInput ? slugInput.value.trim() : '';
@@ -116,7 +135,7 @@ import Layout from '../../layouts/Layout.astro';
             formData.append('file', files[0]);
             formData.append('slug', slug);
 
-            fetch('http://localhost:8080/api/upload', {
+            authFetch('http://localhost:8080/api/admin/upload', {
               method: 'POST',
               body: formData
             }).then(res => res.json()).then(data => {
@@ -147,7 +166,7 @@ import Layout from '../../layouts/Layout.astro';
       document.getElementById('post-slug').disabled = true;
 
       try {
-        const res = await fetch(`http://localhost:8080/api/admin/posts/${editSlug}`);
+        const res = await authFetch(`http://localhost:8080/api/admin/posts/${editSlug}`);
         const data = await res.json();
         
         // 兼容数据字段映射
@@ -182,7 +201,7 @@ import Layout from '../../layouts/Layout.astro';
       if (!payload.title || !payload.slug) return alert("标题和 Slug 不能为空");
 
       try {
-        const res = await fetch('http://localhost:8080/api/posts', {
+        const res = await authFetch('http://localhost:8080/api/admin/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -193,7 +212,7 @@ import Layout from '../../layouts/Layout.astro';
           
           // --- 保留并执行你的清空逻辑 ---
           if (window.vditor) window.vditor.setValue(""); 
-          const fields = ['post-title', 'post-slug', 'post-category', 'post-tags', 'post-image','post-image', 'post-desc'];
+          const fields = ['post-title', 'post-slug', 'post-category', 'post-tags', 'post-lang','post-image', 'post-desc'];
           fields.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "";
