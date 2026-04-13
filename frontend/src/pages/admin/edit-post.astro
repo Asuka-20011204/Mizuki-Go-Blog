@@ -1,0 +1,265 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="编辑文章 - Mizuki Admin">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+  
+  <main class="max-w-[90rem] mx-auto p-4 md:p-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold flex items-center gap-2">
+        <span class="w-2 h-8 bg-blue-600 rounded-full"></span>
+        编辑文章
+      </h1>
+      <div class="flex gap-4">
+        <a href="/admin/" data-no-swup class="px-6 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">返回列表</a>
+        <button id="update-btn" class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:opacity-90 shadow-lg">保存修改</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3 space-y-4">
+        <input type="text" id="post-title" placeholder="文章标题" 
+          class="w-full text-3xl font-bold bg-transparent border-b-2 border-slate-200 focus:border-blue-500 outline-none pb-2 transition-colors" />
+        <div id="vditor" class="rounded-xl shadow-sm"></div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">路径 Slug (不可更改)</label>
+            <input type="text" id="post-slug" readonly class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-400 cursor-not-allowed" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">分类</label>
+            <input type="text" id="post-category" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">标签 (逗号隔开)</label>
+            <input type="text" id="post-tags" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">语言</label>
+            <select id="post-lang" class="w-full p-2 border border-slate-200 rounded-lg outline-none">
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="post-pinned" class="w-4 h-4" />
+            <label for="post-pinned" class="text-sm font-medium">置顶文章</label>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">封面图 URL</label>
+            <input type="text" id="post-image" class="w-full p-2 border border-slate-200 rounded-lg outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">描述</label>
+            <textarea id="post-desc" rows="3" class="w-full p-2 border border-slate-200 rounded-lg outline-none"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  import Vditor from 'vditor';
+  let vditor;
+
+  // 去除字符串开头的 frontmatter 块（如果存在），返回纯正文
+  function stripFrontmatter(markdown) {
+  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+  if (frontmatterRegex.test(markdown)) {
+    return markdown.replace(frontmatterRegex, '');
+  }
+  return markdown;
+}
+
+  // ----- 自定义 frontmatter 解析（浏览器兼容）-----
+  function parseFrontmatter(markdown) {
+  if (typeof markdown !== 'string') {
+    return { data: {}, content: '' };
+  }
+  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+  const match = markdown.match(frontmatterRegex);
+  if (!match) {
+    return { data: {}, content: markdown };
+  }
+  const frontmatterStr = match[1];
+  const content = markdown.slice(match[0].length);
+  const data = {};
+  const lines = frontmatterStr.split('\n');
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex === -1) continue;
+    let key = line.slice(0, colonIndex).trim();
+    let rawValue = line.slice(colonIndex + 1).trim();
+    if (rawValue === '') {
+      data[key] = '';
+      continue;
+    }
+    // 布尔值
+    if (rawValue === 'true') {
+      data[key] = true;
+      continue;
+    }
+    if (rawValue === 'false') {
+      data[key] = false;
+      continue;
+    }
+    // 数字
+    if (/^-?\d+(\.\d+)?$/.test(rawValue)) {
+      data[key] = Number(rawValue);
+      continue;
+    }
+    // 数组 [a, b, c]
+    if (rawValue.startsWith('[') && rawValue.endsWith(']')) {
+      const arrContent = rawValue.slice(1, -1);
+      if (arrContent.trim() === '') {
+        data[key] = [];
+      } else {
+        data[key] = arrContent.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+      }
+      continue;
+    }
+    // 去除引号（此时 rawValue 一定是字符串）
+    if ((rawValue.startsWith('"') && rawValue.endsWith('"')) || (rawValue.startsWith("'") && rawValue.endsWith("'"))) {
+      rawValue = rawValue.slice(1, -1);
+    }
+    data[key] = rawValue;
+  }
+  return { data, content };
+}
+
+  function stringifyFrontmatter(data, content) {
+    let yaml = '---\n';
+    for (const [key, val] of Object.entries(data)) {
+      let value = val;
+      if (Array.isArray(value)) {
+        value = `[${value.map(v => JSON.stringify(v)).join(', ')}]`;
+      } else if (typeof value === 'string') {
+        // 如果字符串包含特殊字符，加引号
+        value = value.includes(':') || value.includes('#') ? JSON.stringify(value) : value;
+      } else if (typeof value === 'boolean') {
+        value = value ? 'true' : 'false';
+      }
+      yaml += `${key}: ${value}\n`;
+    }
+    yaml += '---\n';
+    return yaml + content;
+  }
+
+  // ----- 获取 URL 参数 -----
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  if (!slug) {
+    alert("未指定文章 Slug");
+    window.location.href = "/admin/";
+  }
+
+  // ----- 加载文章数据 -----
+  async function loadPostData() {
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/posts/${slug}`);
+      const post = await res.json();
+      console.log("Original data:", post);
+
+      if (!post) throw new Error('文章数据为空');
+
+      // 解析 frontmatter
+      const { data: fm, content: markdownBody } = parseFrontmatter(post.content || post.Content || '');
+
+      // 合并数据（优先级：frontmatter > 数据库小写字段 > 数据库大写字段）
+      const title = fm.title || post.title || post.Title;
+      const category = fm.category || post.category || post.Category;
+      let tags = fm.tags || post.tags || post.Tags;
+      const image = fm.image || post.image || post.Image;
+      const description = fm.description || post.description || post.Description;
+      const lang = fm.lang || post.lang || post.Lang;
+      const pinned = fm.pinned !== undefined ? fm.pinned : (post.pinned !== undefined ? post.pinned : post.Pinned);
+      const slugFromDb = post.slug || post.Slug || slug;
+
+      // tags 规范化
+      if (Array.isArray(tags)) tags = tags.join(',');
+      else if (typeof tags !== 'string') tags = '';
+
+      // 填充表单
+      document.getElementById('post-title').value = title || '';
+      document.getElementById('post-slug').value = slugFromDb;
+      document.getElementById('post-category').value = category || '';
+      document.getElementById('post-tags').value = tags;
+      document.getElementById('post-image').value = image || '';
+      document.getElementById('post-desc').value = description || '';
+      document.getElementById('post-lang').value = lang || 'zh-CN';
+      document.getElementById('post-pinned').checked = !!pinned;
+
+      // 处理正文图片路径：相对路径 → 预览路径
+      let finalContent = markdownBody || '';
+      finalContent = finalContent.replace(/\]\(\.\//g, '](/preview-cache/');
+
+      // 初始化 Vditor
+      vditor = new Vditor('vditor', {
+        height: 700,
+        value: finalContent,
+        cache: { enable: false },
+        placeholder: "开始编写文章...",
+        preview: { markdown: { toc: true } },
+        after: () => console.log("Vditor 初始化成功")
+      });
+    } catch (e) {
+      alert("加载文章失败");
+      console.error("Load failed:", e);
+    }
+  }
+
+  loadPostData();
+
+  // ----- 保存修改 -----
+  document.getElementById('update-btn')?.addEventListener('click', async () => {
+  const title = document.getElementById('post-title').value;
+  const category = document.getElementById('post-category').value;
+  const tagsRaw = document.getElementById('post-tags').value;
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const image = document.getElementById('post-image').value;
+  const description = document.getElementById('post-desc').value;
+  const lang = document.getElementById('post-lang').value;
+  const pinned = document.getElementById('post-pinned').checked;
+
+  let markdownBody = vditor.getValue();
+  // 预览路径转相对路径
+  let bodyForStorage = markdownBody.replaceAll('/preview-cache/', './');
+  // 去除正文中可能出现的任何 frontmatter（避免重复）
+  bodyForStorage = stripFrontmatter(bodyForStorage);
+
+  const payload = {
+        slug: slug,
+        title: document.getElementById('post-title').value,
+        description: document.getElementById('post-desc').value,
+        category: document.getElementById('post-category').value,
+        tags: document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        image: document.getElementById('post-image').value,
+        lang: document.getElementById('post-lang').value,
+        pinned: document.getElementById('post-pinned').checked,
+        content: bodyForStorage // 发送纯正文
+    };
+
+  try {
+    const res = await fetch('http://localhost:8080/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      alert('修改成功！');
+      // 使用强制物理跳转，确保侧边栏重新加载并刷新接口数据 
+      window.location.href = '/admin/';
+    } else {
+      const errText = await res.text();
+      alert('保存失败: ' + errText);
+    }
+  } catch (err) {
+    alert('网络错误');
+  }
+});
+</script>
+</Layout>

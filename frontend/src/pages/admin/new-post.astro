@@ -1,0 +1,218 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<style is:global>
+  /* 1. 强制锁定发布按钮颜色，防止透明化 */
+  #publish-btn {
+    background-color: #000 !important; /* 或者你的主题色 */
+    color: #fff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border: none !important;
+  }
+  .dark #publish-btn {
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+
+  /* 2. 只有在 editor-page 存在时，才强制隐藏干扰项 */
+  body:has(#editor-page) aside:not(#editor-page aside) {
+    display: none !important;
+    width: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* 3. 强制内容区占满全屏，防止被侧边栏占位 */
+  body:has(#editor-page) main:not(#editor-page main) {
+    display: none !important;
+  }
+</style>
+
+<Layout title="Mizuki 管理后台 - 撰写">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+  
+  <div class="fixed inset-0 bg-white dark:bg-[#1a1b1e] z-[999] overflow-y-auto" id="editor-page">
+    <main class="max-w-[90rem] mx-auto p-4 md:p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h1 id="page-title" class="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+          <span class="w-2 h-8 bg-[var(--primary)] rounded-full"></span>
+          撰写新文章
+        </h1>
+        <div class="flex gap-3">
+          <button onclick="window.location.href='/admin/'" data-no-swup class="px-4 py-2 border rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">返回列表</button>
+          <button id="publish-btn" class="bg-[var(--primary)] text-white px-8 py-2 rounded-xl font-bold hover:opacity-90 transition shadow-lg active:scale-95">
+            同步到博客
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-4">
+          <input type="text" id="post-title" placeholder="在此输入文章标题" 
+            class="w-full text-3xl font-bold bg-transparent border-b-2 border-slate-200 dark:border-slate-800 focus:border-[var(--primary)] outline-none py-2 transition-all" />
+          <div id="vditor" class="rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800"></div>
+        </div>
+
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">自定义 Slug (英文文件名)</label>
+              <input type="text" id="post-slug" placeholder="e.g. my-first-post" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">分类</label>
+              <input type="text" id="post-category" placeholder="分类名称" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">标签 (逗号分隔)</label>
+              <input type="text" id="post-tags" placeholder="tag1, tag2" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">封面图 URL</label>
+              <input type="text" id="post-image" placeholder="/images/cover.jpg" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">语言</label>
+              <select id="post-lang" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700 outline-none">
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 opacity-60">描述</label>
+              <textarea id="post-desc" rows="3" placeholder="文章摘要..." class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700 outline-none"></textarea>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="post-pinned" class="w-4 h-4" />
+              <label for="post-pinned" class="text-sm font-medium opacity-80">置顶文章</label>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
+  <script is:inline>
+    // 1. 初始化 Vditor
+    const initVditor = () => {
+      window.vditor = new Vditor('vditor', {
+        height: '70vh',
+        placeholder: '开始记录你的灵感...',
+        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'classic',
+        preview: { theme: { current: 'light' } },
+        upload: {
+          url: 'http://localhost:8080/api/upload',
+          handler(files) {
+            const slugInput = document.getElementById('post-slug');
+            const slug = slugInput ? slugInput.value.trim() : '';
+            if (!slug) {
+              alert('请先填写 Slug（英文文件名）再上传图片');
+              return null; // 返回 null 让 Vditor 认为上传未执行
+            }
+            // 3. 构造 FormData
+            let formData = new FormData();
+            formData.append('file', files[0]);
+            formData.append('slug', slug);
+
+            fetch('http://localhost:8080/api/upload', {
+              method: 'POST',
+              body: formData
+            }).then(res => res.json()).then(data => {
+              if (data.code === 0) {
+                const url = Object.values(data.data.succMap)[0];
+                window.vditor.insertValue(`![image](${url})`);
+              } else {
+                alert('上传失败：' + (data.message || '未知错误'));
+                }
+            });
+            return null;
+          }
+        },
+        after: () => {
+          checkEditMode();
+        }
+      });
+    };
+
+    // 2. 检查编辑模式 (适配 Go 大写字段)
+    async function checkEditMode() {
+      const params = new URLSearchParams(window.location.search);
+      const editSlug = params.get('edit');
+      if (!editSlug) return;
+
+      document.getElementById('page-title').innerHTML = `<span class="w-2 h-8 bg-orange-500 rounded-full"></span> 编辑文章: ${editSlug}`;
+      document.getElementById('post-slug').value = editSlug;
+      document.getElementById('post-slug').disabled = true;
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/admin/posts/${editSlug}`);
+        const data = await res.json();
+        
+        // 兼容数据字段映射
+        document.getElementById('post-title').value = data.Title || data.title;
+        document.getElementById('post-category').value = data.Category || data.category;
+        document.getElementById('post-tags').value = (data.Tags || data.tags || "").split(',').join(', ');
+        document.getElementById('post-image').value = data.Image || data.image;
+        document.getElementById('post-pinned').checked = data.Pinned || data.pinned;
+        window.vditor.setValue(data.Content || data.content);
+      } catch (e) {
+        console.error("加载详情失败");
+      }
+    }
+
+    // 3. 发布并清空逻辑 (核心：不删除你的逻辑！)
+    document.getElementById('publish-btn').addEventListener('click', async () => {
+      const rawContent = window.vditor.getValue();
+      const finalContent = rawContent.replaceAll('/preview-cache/', './');
+
+      const payload = {
+        title: document.getElementById('post-title').value,
+        slug: document.getElementById('post-slug').value,
+        category: document.getElementById('post-category').value,
+        tags: document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        image: document.getElementById('post-image').value,
+        pinned: document.getElementById('post-pinned').checked,
+        lang: document.getElementById('post-lang').value,
+        description: document.getElementById('post-desc').value,
+        content: finalContent
+      };
+
+      if (!payload.title || !payload.slug) return alert("标题和 Slug 不能为空");
+
+      try {
+        const res = await fetch('http://localhost:8080/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          alert('同步成功！');
+          
+          // --- 保留并执行你的清空逻辑 ---
+          if (window.vditor) window.vditor.setValue(""); 
+          const fields = ['post-title', 'post-slug', 'post-category', 'post-tags', 'post-image','post-image', 'post-desc'];
+          fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+          });
+          document.getElementById('post-pinned').checked = false;
+          document.getElementById('post-lang').value = 'zh-CN';
+
+          // --- 适配 Swup：强制物理跳转回后台首页 ---
+          // 这能解决“侧边栏消失”和“刷新才正常”的问题，因为它重置了 Swup 的状态机
+          window.location.href = '/admin/'; 
+        } else {
+          const errData = await res.json();
+          alert('发布失败: ' + (errData.error || '未知错误'));
+        }
+      } catch (e) {
+        alert('后端连接异常');
+      }
+    });
+
+    initVditor();
+  </script>
+</Layout>

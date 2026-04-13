@@ -1,0 +1,272 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+
+// 这里可以添加简单的权限检查逻辑
+---
+
+<Layout title="Mizuki Admin - 后台管理">
+    <div class="flex h-screen bg-[#f4f7f6] dark:bg-[#1a1b1e] overflow-hidden">
+        <aside class="w-64 bg-white dark:bg-[#25262b] shadow-xl z-30 hidden md:flex flex-col">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center text-white">
+                        <Icon name="material-symbols:admin-panel-settings" class="text-xl" />
+                    </div>
+                    <span class="font-bold text-xl tracking-tight">管理后台</span>
+                </div>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+                <div class="text-xs font-semibold text-gray-400 uppercase px-3 mb-2">内容管理</div>
+                <button class="nav-item active" data-tab="dashboard">
+                    <Icon name="material-symbols:dashboard-outline" /> 控制台
+                </button>
+                <button class="nav-item" data-tab="posts">
+                    <Icon name="material-symbols:article-outline" /> 文章管理
+                </button>
+                <button class="nav-item" data-tab="diaries">
+                    <Icon name="material-symbols:book-outline" /> 日记/碎碎念
+                </button>
+                <button class="nav-item" data-tab="albums">
+                    <Icon name="material-symbols:photo-library" /> 相册媒体
+                </button>
+
+                <div class="text-xs font-semibold text-gray-400 uppercase px-3 mt-6 mb-2">系统设置</div>
+                <button class="nav-item" data-tab="config">
+                    <Icon name="material-symbols:settings-outline" /> 站点配置 (Config)
+                </button>
+                <button class="nav-item" data-tab="nav">
+                    <Icon name="material-symbols:menu-open" /> 导航菜单定制
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-gray-100 dark:border-gray-800">
+                <a href="/" data-no-swup class="flex items-center gap-2 text-sm text-gray-500 hover:text-[var(--primary)] transition">
+                    <Icon name="material-symbols:arrow-back" /> 返回前台
+                </a>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+            <header class="h-16 bg-white dark:bg-[#25262b] shadow-sm flex items-center justify-between px-8">
+                <h2 id="current-tab-title" class="text-lg font-bold text-gray-700 dark:text-gray-200">控制台</h2>
+                <div class="flex items-center gap-4">
+                    <button id="rebuild-btn" class="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition">
+                        <Icon name="material-symbols:refresh" /> 触发重构 (Build)
+                    </button>
+                </div>
+            </header>
+
+            <section id="admin-main-view" class="flex-1 p-8 overflow-y-auto">
+                <div id="dashboard-view" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card">
+                            <span class="text-gray-500 text-sm">文章总数</span>
+                            <div class="text-3xl font-bold mt-1" id="stat-posts">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <span class="text-gray-500 text-sm">分类数量</span>
+                            <div class="text-3xl font-bold mt-1" id="stat-categories">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <span class="text-gray-500 text-sm">运行天数</span>
+                            <div class="text-3xl font-bold mt-1" id="stat-days">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <span class="text-gray-500 text-sm">总字数</span>
+                            <div class="text-3xl font-bold mt-1" id="stat-words">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-[#25262b] rounded-xl p-6 shadow-sm">
+                        <h3 class="font-bold mb-4">快捷操作</h3>
+                        <div class="flex gap-4">
+                            <a href="/admin/new-post/" data-no-swup class="quick-btn bg-blue-50 text-blue-600">写新文章</a>
+                            <button class="quick-btn bg-purple-50 text-purple-600">发布日记</button>
+                            <button class="quick-btn bg-orange-50 text-orange-600">上传相片</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="posts-view" class="tab-content hidden">
+                    <div class="flex justify-between mb-4">
+                        <input type="text" placeholder="搜索文章标题..." class="px-4 py-2 rounded-lg border dark:bg-gray-800" />
+                        <a href="/admin/new-post/" class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg">+ 新增文章</a>
+                    </div>
+                    <div class="bg-white dark:bg-[#25262b] rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm">
+                                <tr>
+                                    <th class="p-4">标题</th>
+                                    <th class="p-4">分类</th>
+                                    <th class="p-4">日期</th>
+                                    <th class="p-4 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="posts-list-table">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</Layout>
+
+<style>
+    .nav-item {
+        @apply flex items-center gap-3 w-full px-4 py-3 text-left rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800;
+    }
+    .nav-item.active {
+        @apply bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold;
+    }
+    .stat-card {
+        @apply bg-white dark:bg-[#25262b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800;
+    }
+    .quick-btn {
+        @apply px-6 py-4 rounded-xl font-bold transition active:scale-95;
+    }
+    .nav-item {
+        @apply flex items-center gap-3 w-full px-4 py-3 text-left rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800;
+    }
+    .nav-item.active {
+        @apply bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold;
+    }
+    .stat-card {
+        @apply bg-white dark:bg-[#25262b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800;
+    }
+    .quick-btn {
+        @apply px-6 py-4 rounded-xl font-bold transition active:scale-95 text-sm;
+    }
+
+    /* 修复报错：手动定义动画代替 tailwind-animate 插件 */
+    .tab-content {
+        animation: slideIn 0.3s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    // --- 1. 侧边栏 Tab 切换逻辑 (补全) ---
+    const navItems = document.querySelectorAll('.nav-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const titleHeader = document.getElementById('current-tab-title');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const tabId = item.getAttribute('data-tab');
+            
+            // 切换按钮激活状态
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+
+            // 切换视图内容
+            tabContents.forEach(content => content.classList.add('hidden'));
+            const targetView = document.getElementById(`${tabId}-view`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            // 更新标题
+            if (titleHeader) titleHeader.innerText = (item as HTMLElement).innerText.trim();
+            
+            // 如果切换到文章管理，自动刷新列表
+            if (tabId === 'posts') refreshPostList();
+        });
+    });
+
+    // --- 2. 渲染文章列表 (适配 Go 结构体首字母大写) ---
+    async function refreshPostList() {
+        const tableBody = document.getElementById('posts-list-table');
+        if (!tableBody) return;
+
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/posts');
+            const posts = await res.json();
+
+            // 注意：此处 post.Title, post.Category, post.Slug 必须首字母大写
+            tableBody.innerHTML = posts.map(post => `
+                <tr class="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                    <td class="p-4 font-medium">${post.Title || post.title}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-300">
+                            ${post.Category || post.category || '未分类'}
+                        </span>
+                    </td>
+                    <td class="p-4 text-sm text-gray-500">
+                        ${new Date(post.CreatedAt || post.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="location.href='/admin/edit-post/?slug=${post.Slug || post.slug}'" 
+                            class="text-blue-500 hover:text-blue-600 font-medium px-2">修改</button>
+                        <button onclick="window.handleDelete('${post.Slug || post.slug}')" 
+                                class="text-red-500 hover:text-red-600 font-medium px-2">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            const postStat = document.getElementById('stat-posts');
+            if(postStat) postStat.innerText = posts.length;
+        } catch (e) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-400">无法连接后端，请检查 Go 服务是否启动</td></tr>';
+        }
+    }
+
+    // --- 3. 删除逻辑 ---
+    (window as any).handleDelete = async (slug: string) => {
+        if(!confirm(`确定要彻底删除文章 [${slug}] 吗？\n这将同时删除数据库记录和磁盘文件！`)) return;
+        try {
+            const res = await fetch(`http://localhost:8080/api/admin/posts/${slug}`, { method: 'DELETE' });
+            if(res.ok) {
+                alert("物理同步删除成功");
+                refreshPostList();
+            }
+        } catch(e) {
+            alert("请求失败");
+        }
+    };
+    // --- 4. 重构逻辑 ---
+    const rebuildBtn = document.getElementById('rebuild-btn');
+    if (rebuildBtn) {
+        rebuildBtn.addEventListener('click', async () => {
+            const originalText = rebuildBtn.innerHTML;
+            
+            // UI 反馈：改为加载状态
+            rebuildBtn.disabled = true;
+            rebuildBtn.innerHTML = `<span>构建中...</span>`;
+            rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
+
+            try {
+                const res = await fetch('http://localhost:8080/api/admin/rebuild', { 
+                    method: 'POST' 
+                });
+                
+                if (res.ok) {
+                    alert("项目重构成功！新静态内容已同步。");
+                } else {
+                    const err = await res.json();
+                    alert("重构失败: " + err.error);
+                }
+            } catch (e) {
+                alert("无法连接服务器");
+            } finally {
+                // 恢复按钮状态
+                rebuildBtn.disabled = false;
+                rebuildBtn.innerHTML = originalText;
+                rebuildBtn.classList.replace('bg-gray-500', 'bg-green-500');
+            }
+        });
+    }
+
+    // 初始加载
+    refreshPostList();
+</script>

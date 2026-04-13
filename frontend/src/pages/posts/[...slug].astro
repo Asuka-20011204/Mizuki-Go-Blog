@@ -1,0 +1,146 @@
+---
+import path from "node:path";
+import Comment from "@components/comment/index.astro";
+import License from "@components/misc/License.astro";
+import Markdown from "@components/misc/Markdown.astro";
+import PasswordProtection from "@components/PasswordProtection.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { getDir, getPostUrlBySlug, removeFileExtension, getFileDirFromPath } from "@utils/url-utils";
+import { render } from "astro:content";
+import { Icon } from "astro-icon/components";
+import bcryptjs from "bcryptjs";
+import CryptoJS from "crypto-js";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { licenseConfig } from "src/config";
+import ImageWrapper from "../../components/misc/ImageWrapper.astro";
+import PostMetadata from "../../components/PostMeta.astro";
+import { profileConfig, siteConfig } from "../../config";
+import { formatDateToYYYYMMDD } from "../../utils/date-utils";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+	const blogEntries = await getSortedPosts();
+	const paths = [];
+	
+	for (const entry of blogEntries) {
+        // 统一使用 removeFileExtension 后的 id 作为 slug
+        const slug = removeFileExtension(entry.id);
+
+		paths.push({
+			params: { slug },
+			props: { entry },
+		});
+		
+		if (entry.data.permalink) {
+			let permalink = entry.data.permalink.replace(/^\/+/, '').replace(/\/+$/, '');
+			if (permalink.startsWith('posts/')) {
+				permalink = permalink.replace(/^posts\//, '');
+			}
+			paths.push({
+				params: { slug: permalink },
+				props: { entry },
+			});
+		}
+	}
+	return paths;
+}
+
+const { entry } = Astro.props;
+// 使用 render(entry) 代替旧版渲染
+const { Content, headings } = await render(entry);
+const { remarkPluginFrontmatter } = await render(entry);
+
+// 加密逻辑保持不变...
+let isEncrypted = entry.data.encrypted && entry.data.password;
+let encryptedContent = "";
+let passwordHash = "";
+
+if (isEncrypted) {
+	const contentToEncrypt = entry.body;
+	const saltRounds = Number.parseInt(import.meta.env.BCRYPT_SALT_ROUNDS || "12", 10);
+	passwordHash = bcryptjs.hashSync(entry.data.password, saltRounds);
+	const encryptionKey = passwordHash.substring(0, 32);
+	encryptedContent = CryptoJS.AES.encrypt(contentToEncrypt, encryptionKey).toString();
+}
+
+dayjs.extend(utc);
+const lastModified = dayjs(entry.data.updated || entry.data.published).utc().format("YYYY-MM-DDTHH:mm:ss");
+
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BlogPosting",
+	headline: entry.data.title,
+    // ... 后续逻辑保持不变
+};
+---
+
+<MainGridLayout
+    banner={entry.data.image}
+    title={entry.data.title}
+    description={entry.data.description}
+    lang={entry.data.lang}
+    setOGTypeArticle={true}
+    postSlug={entry.id}
+    headings={headings}
+>
+    <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
+        <div id="post-container" class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
+            
+            <div class="flex flex-row text-black/30 dark:text-white/30 gap-5 mb-3 transition onload-animation">
+                <div class="flex flex-row items-center">
+                    <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+                        <Icon name="material-symbols:notes-rounded" />
+                    </div>
+                    <div class="text-sm">
+                        {remarkPluginFrontmatter.words} {i18n(I18nKey.wordsCount)}
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative onload-animation">
+                <div data-pagefind-body data-pagefind-weight="10" data-pagefind-meta="title"
+                    class="transition w-full block font-bold mb-3 text-3xl md:text-[2.25rem]/[2.75rem] text-black/90 dark:text-white/90 md:before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)] before:absolute before:top-[0.75rem] before:left-[-1.125rem]">
+                    {entry.data.title}
+                </div>
+            </div>
+
+            <div class="onload-animation">
+                <PostMetadata
+                    class="mb-5"
+                    published={entry.data.published}
+                    updated={entry.data.updated}
+                    tags={entry.data.tags}
+                    category={entry.data.category || undefined}
+                    id={entry.id}
+                />
+            </div>
+
+            {isEncrypted ? (
+                <PasswordProtection encryptedContent={encryptedContent} passwordHash={passwordHash} />
+            ) : (
+                <Markdown class="mb-6 markdown-content onload-animation">
+                    <Content />
+                </Markdown>
+            )}
+
+            {licenseConfig.enable && !isEncrypted && (
+                <License
+                    title={entry.data.title}
+                    id={entry.id}
+                    pubDate={entry.data.published}
+                    author={entry.data.author}
+                    class="mb-6 rounded-xl license-container onload-animation"
+                />
+            )}
+        </div>
+    </div>
+
+    <Comment post={entry} />
+
+    </MainGridLayout>
