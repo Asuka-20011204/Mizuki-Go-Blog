@@ -2,6 +2,7 @@ package controller
 
 import (
 	"my-blog-backend/service"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,8 @@ type DashboardController struct {
 func (dc *DashboardController) GetStats(c *gin.Context) {
 	stats, err := dc.DashboardService.GetStats()
 	if err != nil {
-		c.JSON(500, gin.H{"error": "获取统计数据失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取统计数据失败"})
 		return
 	}
-	c.JSON(200, stats)
+	c.JSON(http.StatusOK, stats)
 }
