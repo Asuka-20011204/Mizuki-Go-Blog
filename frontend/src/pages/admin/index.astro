@@ -112,6 +112,34 @@ import { Icon } from "astro-icon/components";
                         </table>
                     </div>
                 </div>
+                <div id="diaries-view" class="tab-content hidden">
+                    <div class="flex justify-between mb-6">
+                        <h3 class="text-xl font-bold dark:text-gray-100">日记/碎碎念管理</h3>
+                        <button id="add-diary-btn" class="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-500/20">
+                            + 发布新动态
+                        </button>
+                </div>
+                <div id="diary-form-container" class="mb-8 bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hidden">
+                    <textarea id="diary-content" rows="4" placeholder="今天想说点什么..." class="w-full p-4 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-purple-500 transition-all"></textarea>
+                    <div id="diary-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
+
+                    <div class="mt-4 flex flex-wrap gap-4 items-center">
+                        <button id="diary-upload-trigger" type="button" class="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+                            <Icon name="material-symbols:add-photo-alternate-outline" /> 上传图片
+                        </button>
+                        <input type="file" id="diary-file-input" class="hidden" multiple accept="image/*" />
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-4 items-center">
+                        <input type="text" id="diary-location" placeholder="地点 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+                        <input type="text" id="diary-mood" placeholder="心情 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+                        <div class="flex-1"></div>
+                        <button id="cancel-diary-btn" class="px-6 py-2 text-gray-500">取消</button>
+                        <button id="submit-diary-btn" class="bg-purple-600 text-white px-8 py-2 rounded-xl font-bold">立即发布</button>
+                    </div>
+                </div>
+                <div id="diary-list-container" class="space-y-4">
+                    </div>
+            </div>
             </section>
         </main>
     </div>
@@ -164,6 +192,10 @@ import { Icon } from "astro-icon/components";
     // 封装认证请求
     async function authFetch(url, options: any = {}) {
         const token = localStorage.getItem('mizuki_token');
+        if (!token) {
+            window.location.href = '/admin/login/';
+            return;
+        }
         const headers = {
             ...options.headers,
             'Authorization': `Bearer ${token}`
@@ -193,8 +225,6 @@ import { Icon } from "astro-icon/components";
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const tabId = item.getAttribute('data-tab');
-            
-            // 切换按钮激活状态
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
 
@@ -208,6 +238,7 @@ import { Icon } from "astro-icon/components";
             
             // 如果切换到文章管理，自动刷新列表
             if (tabId === 'posts') refreshPostList();
+            if (tabId === 'diaries') refreshDiaryList();
         });
     });
 
@@ -273,6 +304,158 @@ import { Icon } from "astro-icon/components";
             alert("请求失败");
         }
     };
+    // 日记管理逻辑
+    const diaryForm = document.getElementById('diary-form-container');
+    const diaryList = document.getElementById('diary-list-container');
+
+    // 切换发布框显示
+    document.getElementById('add-diary-btn')?.addEventListener('click', () => {
+        diaryForm?.classList.toggle('hidden');
+    });
+    // 1. 定义统一的重置函数
+    function resetDiaryForm() {
+        // 清空文本和输入框
+        (document.getElementById('diary-content') as HTMLTextAreaElement).value = "";
+        (document.getElementById('diary-location') as HTMLInputElement).value = "";
+        (document.getElementById('diary-mood') as HTMLInputElement).value = "";
+    
+        // 清空图片状态数据
+        diaryUploadedImages = [];
+    
+        // 清空预览区 DOM
+        const previewContainer = document.getElementById('diary-image-preview');
+        if (previewContainer) previewContainer.innerHTML = "";
+    
+        // 隐藏表单
+        const diaryForm = document.getElementById('diary-form-container');
+        diaryForm?.classList.add('hidden');
+    }
+    //取消按钮
+    document.getElementById('cancel-diary-btn')?.addEventListener('click', () => {
+        if (diaryUploadedImages.length > 0) {
+            if (!confirm("已上传的图片将不会被保存，确定取消吗？")) return;
+        }
+        resetDiaryForm();
+    });
+
+    // 获取日记列表 (解析自后端读取的 diary.ts)
+    async function refreshDiaryList() {
+        if (!diaryList) return;
+        try {
+            const res = await authFetch('http://localhost:8080/api/admin/diaries');
+            const diaries = await res.json();
+            
+            diaryList.innerHTML = diaries.map(item => `
+                <div class="bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs text-gray-400 font-mono">${new Date(item.date).toLocaleString()}</span>
+                        <div class="flex gap-2">
+                            <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-500">${item.mood || '😶'}</span>
+                            <button onclick="window.deleteDiary(${item.id})" class="text-red-400 hover:text-red-500 text-xs">删除</button>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">${item.content}</p>
+                    ${item.location ? `<div class="mt-3 text-xs text-blue-400 flex items-center gap-1">📍 ${item.location}</div>` : ''}
+                </div>
+            `).join('');
+        } catch (e) {
+            diaryList.innerHTML = '<p class="text-center text-red-400">加载日记失败</p>';
+        }
+    }
+
+    let diaryUploadedImages = []; // 存储上传成功的图片路径
+
+    // 触发文件选择
+    document.getElementById('diary-upload-trigger')?.addEventListener('click', () => {
+        document.getElementById('diary-file-input').click();
+    });
+
+    // 处理文件上传
+    document.getElementById('diary-file-input')?.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        const previewContainer = document.getElementById('diary-image-preview');
+    
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('slug', 'diary'); // 日记图片可以统一放在 diary 目录下
+
+            try {
+                // 复用文章上传接口
+                const res = await authFetch('http://localhost:8080/api/admin/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.code === 0) {
+                    const url = Object.values(data.data.succMap)[0];
+                    // 增加时间戳后缀防止 404 缓存
+                    const freshUrl = `${url}?t=${Date.now()}`; 
+                    diaryUploadedImages.push(url); // 存入数据库的路径不需要后缀
+    
+                    const img = document.createElement('img');
+                    img.src = freshUrl; // 预览使用带后缀的 URL
+                    img.className = "w-20 h-20 object-cover rounded-lg border dark:border-gray-700";
+                    previewContainer.appendChild(img);
+                }
+            } catch (err) {
+                console.error("图片上传失败", err);
+            }
+        }
+    });
+
+    // 提交新日记
+    document.getElementById('submit-diary-btn')?.addEventListener('click', async () => {
+        const content = (document.getElementById('diary-content') as HTMLTextAreaElement).value;
+        const location = (document.getElementById('diary-location') as HTMLInputElement).value;
+        const mood = (document.getElementById('diary-mood') as HTMLInputElement).value;
+
+        if (!content) return alert("内容不能为空");
+
+        try {
+            const res = await authFetch('http://localhost:8080/api/admin/diaries', {
+                method: 'POST',
+                body: JSON.stringify({ content, location, mood, images: diaryUploadedImages })
+            });
+
+            if (res.ok) {
+                diaryUploadedImages = [];
+                document.getElementById('diary-image-preview').innerHTML = "";
+                (document.getElementById('diary-content') as HTMLTextAreaElement).value = "";
+                diaryForm?.classList.add('hidden');
+                refreshDiaryList();
+                alert("动态发布成功！请手动触发重构以更新前台。");
+            }
+        } catch (e) {
+            alert("发布失败");
+        }
+    });
+
+    // 删除日记 (暴露给全局 window)
+    (window as any).deleteDiary = async (id: number) => {
+        if (!confirm("确定删除这条日记吗？")) return;
+        // 注意：后端需要对应实现 DELETE /api/admin/diaries/:id
+        try {
+            const res = await authFetch(`http://localhost:8080/api/admin/diaries/${id}`, { method: 'DELETE' });
+            if (res.ok) refreshDiaryList();
+        } catch (e) {
+            alert("删除失败");
+        }
+    };
+
+    // --- 3. 初始执行 ---
+    // 根据当前选中的 Tab 初始化
+    const activeTab = document.querySelector('.nav-item.active')?.getAttribute('data-tab');
+    if (activeTab === 'posts') {
+        refreshPostList();
+    } else if (activeTab === 'diaries') {
+        refreshDiaryList();
+    } else if (activeTab === 'dashboard') {
+        /* 初始化控制台数据 */
+    }
+    
+
     // --- 4. 重构逻辑 ---
     const rebuildBtn = document.getElementById('rebuild-btn');
     if (rebuildBtn) {
@@ -305,9 +488,6 @@ import { Icon } from "astro-icon/components";
             }
         });
     }
-
-    // 初始加载
-    refreshPostList();
     //退出登录按钮
     document.getElementById('logout-btn')?.addEventListener('click', () => {
         if(confirm('确定要退出管理系统吗？')) {

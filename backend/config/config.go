@@ -31,9 +31,10 @@ type JWTConfig struct {
 }
 
 type SystemConfig struct {
-	PostsDir    string `yaml:"posts_dir"`
-	PreviewDir  string `yaml:"preview_dir"`
-	FrontendDir string `yaml:"frontend_dir"`
+	PostsDir      string `yaml:"posts_dir"`
+	PreviewDir    string `yaml:"preview_dir"`
+	FrontendDir   string `yaml:"frontend_dir"`
+	DiaryJsonPath string `yaml:"diary_json_path"`
 }
 
 type InitDataConfig struct {

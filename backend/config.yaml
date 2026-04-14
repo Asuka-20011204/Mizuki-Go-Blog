@@ -13,6 +13,7 @@ system:
   posts_dir: "../frontend/src/content/posts"
   preview_dir: "../frontend/public/preview-cache"
   frontend_dir: "../frontend"
+  diary_json_path: "./data/diary.json"
 
 # 初始所有者配置
 init_data:

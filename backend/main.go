@@ -33,10 +33,14 @@ func main() {
 	postService := &service.PostService{DB: db}
 	authService := &service.AuthService{DB: db}
 	systemService := &service.SystemService{}
+	diaryService := &service.DiaryService{}
+	dashboardService := &service.DashboardService{DB: db}
 	// 第二步：将 service 注入 Controller
 	postCtrl := &controller.PostController{PostService: postService}
 	authCtrl := &controller.AuthController{AuthService: authService}
 	systemCtrl := &controller.SystemController{SystemService: systemService}
+	diaryCtrl := &controller.DiaryController{DiaryService: diaryService}
+	dashboardCtrl := &controller.DashboardController{DashboardService: dashboardService}
 
 	// 3. 设置 Gin 路由
 	r := gin.Default()
@@ -54,8 +58,12 @@ func main() {
 		admin.POST("/upload", postCtrl.HandleUpload)
 		admin.POST("/rebuild", systemCtrl.HandleRebuild)
 		admin.GET("/posts", postCtrl.ListPosts)
-		admin.GET("/posts/:slug", postCtrl.GetPostDetail) // 新增这一行
+		admin.GET("/posts/:slug", postCtrl.GetPostDetail)
 		admin.DELETE("/posts/:slug", postCtrl.DeletePost)
+		admin.GET("/diaries", diaryCtrl.List)
+		admin.POST("/diaries", diaryCtrl.Create)
+		admin.DELETE("/diaries/:id", diaryCtrl.Delete)
+		admin.GET("/stats", dashboardCtrl.GetStats)
 	}
 	r.Static("/preview-cache", "../frontend/public/preview-cache")
 
