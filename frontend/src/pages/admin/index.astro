@@ -212,6 +212,30 @@ import { Icon } from "astro-icon/components";
         
         return response;
     }
+    async function refreshStats() {
+        try {
+            const res = await authFetch('http://localhost:8080/api/admin/stats');
+            const data = await res.json();
+
+            // 精准填入对应的 ID [cite: 99, 100, 101, 102]
+            const statPosts = document.getElementById('stat-posts');
+            const statCategories = document.getElementById('stat-categories');
+            const statDays = document.getElementById('stat-days');
+            const statWords = document.getElementById('stat-words');
+
+            if (statPosts) statPosts.innerText = data.postCount;
+            if (statCategories) statCategories.innerText = data.categoryCount;
+            if (statDays) statDays.innerText = data.runningDays;
+            if (statWords) {
+                // 如果字数过万，进行友好格式化
+                statWords.innerText = data.totalWords > 10000 
+                    ? (data.totalWords / 1000).toFixed(1) + 'k' 
+                    : data.totalWords;
+            }
+        } catch (e) {
+            console.error("统计数据加载失败");
+        }
+    }
     const token = localStorage.getItem('mizuki_token')
     if (!token) {
         //如果没有token踢回登录页
@@ -239,8 +263,10 @@ import { Icon } from "astro-icon/components";
             // 如果切换到文章管理，自动刷新列表
             if (tabId === 'posts') refreshPostList();
             if (tabId === 'diaries') refreshDiaryList();
+            if (tabId === 'dashboard') refreshStats();
         });
     });
+    
 
     // --- 2. 渲染文章列表 (适配 Go 结构体首字母大写) ---
     async function refreshPostList() {
@@ -453,6 +479,7 @@ import { Icon } from "astro-icon/components";
         refreshDiaryList();
     } else if (activeTab === 'dashboard') {
         /* 初始化控制台数据 */
+        refreshStats()
     }
     
 
