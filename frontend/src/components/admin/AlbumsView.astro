@@ -1,0 +1,101 @@
+<!-- src/components/admin/AlbumsView.astro -->
+<div id="albums-view" class="tab-content hidden">
+    <div class="flex justify-between mb-6">
+        <h3 class="text-xl font-bold dark:text-gray-100 text-slate-800">相册媒体管理</h3>
+        <button id="new-album-btn" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg">
+            + 新建相册
+        </button>
+    </div>
+
+    <div id="albums-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- 动态加载相册列表 -->
+    </div>
+</div>
+
+<!-- 创建相册对话框 -->
+<dialog id="album-dialog" class="rounded-2xl p-6 bg-white dark:bg-[#25262b] shadow-2xl border-none w-full max-w-lg">
+    <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-gray-100 flex items-center gap-2">
+        <span class="w-2 h-6 bg-orange-500 rounded-full"></span>
+        创建新相册
+    </h3>
+
+    <div class="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册 ID (文件夹名)</label>
+                <input type="text" id="album-id" placeholder="e.g. travel-2024" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册标题</label>
+                <input type="text" id="album-title" placeholder="显示在页面的名称" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册描述</label>
+            <textarea id="album-desc" placeholder="简短介绍这个相册..." rows="2" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">日期</label>
+                <input type="date" id="album-date" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">拍摄地点</label>
+                <input type="text" id="album-location" placeholder="e.g. 日本, 东京" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">布局方式</label>
+                <select id="album-layout" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none">
+                    <option value="masonry">瀑布流 (Masonry)</option>
+                    <option value="grid">网格 (Grid)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">列数 (2-4)</label>
+                <input type="number" id="album-columns" value="3" min="2" max="4" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none" />
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">标签 (逗号分隔)</label>
+            <input type="text" id="album-tags" placeholder="旅行, 生活, 摄影" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+            <input type="checkbox" id="album-hidden" class="w-4 h-4 accent-orange-500" />
+            <label for="album-hidden" class="text-sm font-medium text-gray-600 dark:text-gray-400">不在列表页公开显示 (隐藏相册)</label>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-8">
+        <button onclick="document.getElementById('album-dialog').close()" class="px-6 py-2 text-gray-500 hover:text-gray-700 transition font-medium">取消</button>
+        <button id="confirm-create-album" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition">
+            创建相册
+        </button>
+    </div>
+</dialog>
+
+<!-- 相册图片管理对话框 -->
+<dialog id="photo-manager-dialog" class="rounded-2xl p-6 bg-white dark:bg-[#25262b] shadow-2xl border-none w-full max-w-3xl">
+    <div class="flex justify-between items-center mb-4">
+        <h3 id="mgr-album-title" class="text-xl font-bold">管理相册图片</h3>
+        <button onclick="document.getElementById('photo-manager-dialog').close()" class="text-gray-400">关闭</button>
+    </div>
+
+    <div class="space-y-4">
+        <div class="p-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl text-center">
+            <input type="file" id="photo-upload-input" class="hidden" multiple accept="image/*" />
+            <p class="text-sm text-gray-500 mb-4">图片将直接保存至 public/images/albums/<span id="mgr-album-id"></span>/</p>
+            <button onclick="document.getElementById('photo-upload-input').click()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">上传照片</button>
+        </div>
+
+        <div id="mgr-photos-grid" class="grid grid-cols-4 gap-4 max-h-96 overflow-y-auto p-2">
+            <!-- 动态加载图片列表 -->
+        </div>
+    </div>
+</dialog>

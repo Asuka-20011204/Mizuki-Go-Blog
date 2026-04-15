@@ -1,13 +1,13 @@
 ---
-title: "萨丢斯434"
-published: 2026-04-13
-description: "测试"
+title: "司机大王"
+published: 2026-04-15
+description: "早点睡啊·1"
 image: "/images/albums/AcgExample/1.webp"
-tags: ['Go']
+tags: ['test']
 category: "test"
-pinned: true
+pinned: false
 lang: "zh-CN"
 draft: false
 ---
 
-![image](./202c6c2a-acab-4e39-bca0-bad16ea6f77c.jpg)![image](./120e181b-6ef2-493b-aac7-e72c34b762cc.jpg)
+我去问![image](./da7cdf86-5434-4296-92ec-106b72010ba0.jpg)

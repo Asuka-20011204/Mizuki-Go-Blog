@@ -1,0 +1,22 @@
+<!-- src/components/admin/PostsView.astro -->
+<div id="posts-view" class="tab-content hidden">
+    <div class="flex justify-between mb-4">
+        <input type="text" id="search-posts-input" placeholder="搜索文章标题..." class="px-4 py-2 rounded-lg border dark:bg-gray-800" />
+        <a href="/admin/new-post/" class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg">+ 新增文章</a>
+    </div>
+    <div class="bg-white dark:bg-[#25262b] rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm">
+                <tr>
+                    <th class="p-4">标题</th>
+                    <th class="p-4">分类</th>
+                    <th class="p-4">日期</th>
+                    <th class="p-4 text-right">操作</th>
+                </tr>
+            </thead>
+            <tbody id="posts-list-table">
+                <!-- 动态填充文章列表 -->
+            </tbody>
+        </table>
+    </div>
+</div>

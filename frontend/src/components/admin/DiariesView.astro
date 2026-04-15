@@ -1,0 +1,38 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<!-- src/components/admin/DiariesView.astro -->
+<div id="diaries-view" class="tab-content hidden">
+    <div class="flex justify-between mb-6">
+        <h3 class="text-xl font-bold dark:text-gray-100">日记/碎碎念管理</h3>
+        <button id="add-diary-btn" class="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-500/20">
+            + 发布新动态
+        </button>
+    </div>
+
+    <div id="diary-form-container" class="mb-8 bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hidden">
+        <textarea id="diary-content" rows="4" placeholder="今天想说点什么..." class="w-full p-4 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-purple-500 transition-all"></textarea>
+        
+        <div id="diary-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
+
+        <div class="mt-4 flex flex-wrap gap-4 items-center">
+            <button id="diary-upload-trigger" type="button" class="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+                <Icon name="material-symbols:add-photo-alternate-outline" /> 上传图片
+            </button>
+            <input type="file" id="diary-file-input" class="hidden" multiple accept="image/*" />
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-4 items-center">
+            <input type="text" id="diary-location" placeholder="地点 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+            <input type="text" id="diary-mood" placeholder="心情 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+            <div class="flex-1"></div>
+            <button id="cancel-diary-btn" class="px-6 py-2 text-gray-500">取消</button>
+            <button id="submit-diary-btn" class="bg-purple-600 text-white px-8 py-2 rounded-xl font-bold">立即发布</button>
+        </div>
+    </div>
+
+    <div id="diary-list-container" class="space-y-4">
+        <!-- 动态加载日记列表 -->
+    </div>
+</div>

@@ -1,0 +1,30 @@
+<!-- src/components/admin/DashboardView.astro -->
+<div id="dashboard-view" class="tab-content">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="stat-card">
+            <span class="text-gray-500 text-sm">文章总数</span>
+            <div class="text-3xl font-bold mt-1" id="stat-posts">-</div>
+        </div>
+        <div class="stat-card">
+            <span class="text-gray-500 text-sm">分类数量</span>
+            <div class="text-3xl font-bold mt-1" id="stat-categories">-</div>
+        </div>
+        <div class="stat-card">
+            <span class="text-gray-500 text-sm">运行天数</span>
+            <div class="text-3xl font-bold mt-1" id="stat-days">-</div>
+        </div>
+        <div class="stat-card">
+            <span class="text-gray-500 text-sm">总字数</span>
+            <div class="text-3xl font-bold mt-1" id="stat-words">-</div>
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-[#25262b] rounded-xl p-6 shadow-sm">
+        <h3 class="font-bold mb-4">快捷操作</h3>
+        <div class="flex gap-4">
+            <a href="/admin/new-post/" data-no-swup class="quick-btn bg-blue-50 text-blue-600">写新文章</a>
+            <button id="dashboard-add-diary" class="quick-btn bg-purple-50 text-purple-600">发布日记</button>
+            <button id="dashboard-add-photo" class="quick-btn bg-orange-50 text-orange-600">上传相片</button>
+        </div>
+    </div>
+</div>

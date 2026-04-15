@@ -139,7 +139,7 @@ func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader, 
 			return "", err
 		}
 		savePath = filepath.Join(postDir, newFileName)
-		returnURL = "/preview-cache/" + newFileName
+		returnURL = newFileName
 	}
 
 	// 保存原始文件
