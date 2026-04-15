@@ -1,0 +1,13 @@
+{
+  "title": "测试",
+  "description": "测试",
+  "date": "2026-04-15",
+  "location": "e.g. 日本.东京",
+  "tags": [
+    "测试"
+  ],
+  "layout": "masonry",
+  "columns": 3,
+  "hidden": false,
+  "mode": "local"
+}

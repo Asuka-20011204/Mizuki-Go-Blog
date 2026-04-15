@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"my-blog-backend/config"
 	"my-blog-backend/models"
 
 	"os"
@@ -104,19 +105,42 @@ func (s *PostService) DeletePost(slug string) error {
 }
 
 // 5. 保存资源 (图片) - 保持你原有的预览逻辑
-func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader) (string, error) {
-	postDir := filepath.Join(postsBaseDir, slug)
-	os.MkdirAll(postDir, 0755)
-	os.MkdirAll(previewDir, 0755)
-
-	// 动态获取文件后缀，不要硬编码
-	ext := filepath.Ext(file.Filename) // 会得到 .png, .jpg, .webp 等
-
+func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader, isCover bool) (string, error) {
+	ext := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + ext
 
-	// 生成保存路径
-	dstPath := filepath.Join(postDir, newFileName)
-	fmt.Printf("保存路径为：%s\n", dstPath)
+	var returnURL string
+	var savePath string
+
+	if strings.HasPrefix(slug, "albums/") {
+		// 相册图片
+		albumID := strings.TrimPrefix(slug, "albums/")
+		albumDir := filepath.Join(config.GlobalConfig.System.FrontendDir, "public/images/albums", albumID)
+		if err := os.MkdirAll(albumDir, 0755); err != nil {
+			return "", err
+		}
+		if isCover {
+			newFileName = "cover.jpg"
+		} else {
+			// 检查是否已有封面，如果没有，这张就是封面
+			if _, err := os.Stat(filepath.Join(albumDir, "cover.jpg")); os.IsNotExist(err) {
+				newFileName = "cover.jpg"
+			}
+		}
+		savePath = filepath.Join(albumDir, newFileName)
+		returnURL = "/images/albums/" + albumID + "/" + newFileName
+	} else {
+		// 文章图片
+		postDir := filepath.Join(postsBaseDir, slug)
+		if err := os.MkdirAll(postDir, 0755); err != nil {
+			return "", err
+		}
+		if err := os.MkdirAll(previewDir, 0755); err != nil {
+			return "", err
+		}
+		savePath = filepath.Join(postDir, newFileName)
+		returnURL = "/preview-cache/" + newFileName
+	}
 
 	// 保存原始文件
 	src, err := file.Open()
@@ -125,20 +149,24 @@ func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader) 
 	}
 	defer src.Close()
 
-	out, err := os.Create(dstPath)
+	out, err := os.Create(savePath)
 	if err != nil {
 		return "", err
 	}
 	defer out.Close()
-	io.Copy(out, src)
-
-	// 拷贝到路径 B (预览)
-	previewPath := filepath.Join(previewDir, newFileName)
-	if err := s.copyFile(dstPath, previewPath); err != nil {
-		log.Printf("预览文件拷贝失败: %v", err)
+	if _, err := io.Copy(out, src); err != nil {
+		return "", err
 	}
 
-	return newFileName, nil
+	// 如果是文章图片，额外复制一份到预览目录
+	if !strings.HasPrefix(slug, "albums/") {
+		previewPath := filepath.Join(previewDir, newFileName)
+		if err := s.copyFile(savePath, previewPath); err != nil {
+			log.Printf("预览文件拷贝失败: %v", err)
+		}
+	}
+
+	return returnURL, nil
 }
 
 // 辅助函数

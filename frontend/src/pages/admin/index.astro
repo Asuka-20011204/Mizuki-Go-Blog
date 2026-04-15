@@ -118,28 +118,124 @@ import { Icon } from "astro-icon/components";
                         <button id="add-diary-btn" class="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-500/20">
                             + 发布新动态
                         </button>
-                </div>
-                <div id="diary-form-container" class="mb-8 bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hidden">
-                    <textarea id="diary-content" rows="4" placeholder="今天想说点什么..." class="w-full p-4 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-purple-500 transition-all"></textarea>
-                    <div id="diary-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                    <div id="diary-form-container" class="mb-8 bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hidden">
+                        <textarea id="diary-content" rows="4" placeholder="今天想说点什么..." class="w-full p-4 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-purple-500 transition-all"></textarea>
+                        <div id="diary-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
 
-                    <div class="mt-4 flex flex-wrap gap-4 items-center">
-                        <button id="diary-upload-trigger" type="button" class="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
-                            <Icon name="material-symbols:add-photo-alternate-outline" /> 上传图片
-                        </button>
-                        <input type="file" id="diary-file-input" class="hidden" multiple accept="image/*" />
+                        <div class="mt-4 flex flex-wrap gap-4 items-center">
+                            <button id="diary-upload-trigger" type="button" class="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+                                <Icon name="material-symbols:add-photo-alternate-outline" /> 上传图片
+                            </button>
+                            <input type="file" id="diary-file-input" class="hidden" multiple accept="image/*" />
+                        </div>
+                    
+                        <div class="mt-4 flex flex-wrap gap-4 items-center">
+                            <input type="text" id="diary-location" placeholder="地点 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+                            <input type="text" id="diary-mood" placeholder="心情 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
+                            <div class="flex-1"></div>
+                            <button id="cancel-diary-btn" class="px-6 py-2 text-gray-500">取消</button>
+                            <button id="submit-diary-btn" class="bg-purple-600 text-white px-8 py-2 rounded-xl font-bold">立即发布</button>
+                        </div>
                     </div>
-                    <div class="mt-4 flex flex-wrap gap-4 items-center">
-                        <input type="text" id="diary-location" placeholder="地点 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
-                        <input type="text" id="diary-mood" placeholder="心情 (可选)" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 text-sm" />
-                        <div class="flex-1"></div>
-                        <button id="cancel-diary-btn" class="px-6 py-2 text-gray-500">取消</button>
-                        <button id="submit-diary-btn" class="bg-purple-600 text-white px-8 py-2 rounded-xl font-bold">立即发布</button>
+                    <div id="diary-list-container" class="space-y-4">
                     </div>
                 </div>
-                <div id="diary-list-container" class="space-y-4">
+                <div id="albums-view" class="tab-content hidden">
+                    <div class="flex justify-between mb-6">
+                        <h3 class="text-xl font-bold dark:text-gray-100 text-slate-800">相册媒体管理</h3>
+                        <button id="new-album-btn" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg">
+                            + 新建相册
+                        </button>
                     </div>
-            </div>
+
+                    <div id="albums-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    </div>
+                </div>
+
+                <dialog id="album-dialog" class="rounded-2xl p-6 bg-white dark:bg-[#25262b] shadow-2xl border-none w-full max-w-lg">
+                    <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-gray-100 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-orange-500 rounded-full"></span>
+                        创建新相册
+                    </h3>
+    
+                    <div class="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册 ID (文件夹名)</label>
+                                <input type="text" id="album-id" placeholder="e.g. travel-2024" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册标题</label>
+                                <input type="text" id="album-title" placeholder="显示在页面的名称" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册描述</label>
+                            <textarea id="album-desc" placeholder="简短介绍这个相册..." rows="2" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">日期</label>
+                                <input type="date" id="album-date" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">拍摄地点</label>
+                                <input type="text" id="album-location" placeholder="e.g. 日本, 东京" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">布局方式</label>
+                                <select id="album-layout" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none">
+                                    <option value="masonry">瀑布流 (Masonry)</option>
+                                    <option value="grid">网格 (Grid)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">列数 (2-4)</label>
+                                <input type="number" id="album-columns" value="3" min="2" max="4" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">标签 (逗号分隔)</label>
+                            <input type="text" id="album-tags" placeholder="旅行, 生活, 摄影" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <input type="checkbox" id="album-hidden" class="w-4 h-4 accent-orange-500" />
+                            <label for="album-hidden" class="text-sm font-medium text-gray-600 dark:text-gray-400">不在列表页公开显示 (隐藏相册)</label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8">
+                        <button onclick="document.getElementById('album-dialog').close()" class="px-6 py-2 text-gray-500 hover:text-gray-700 transition font-medium">取消</button>
+                        <button id="confirm-create-album" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition">
+                            创建相册
+                        </button>
+                    </div>
+                </dialog>
+                <dialog id="photo-manager-dialog" class="rounded-2xl p-6 bg-white dark:bg-[#25262b] shadow-2xl border-none w-full max-w-3xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="mgr-album-title" class="text-xl font-bold">管理相册图片</h3>
+                        <button onclick="document.getElementById('photo-manager-dialog').close()" class="text-gray-400">关闭</button>
+                    </div>
+    
+                    <div class="space-y-4">
+                        <div class="p-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl text-center">
+                            <input type="file" id="photo-upload-input" class="hidden" multiple accept="image/*" />
+                            <p class="text-sm text-gray-500 mb-4">图片将直接保存至 public/images/albums/<span id="mgr-album-id"></span>/</p>
+                            <button onclick="document.getElementById('photo-upload-input').click()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">上传照片</button>
+                        </div>
+
+                        <div id="mgr-photos-grid" class="grid grid-cols-4 gap-4 max-h-96 overflow-y-auto p-2">
+                            </div>
+                    </div>
+                </dialog>
             </section>
         </main>
     </div>
@@ -264,6 +360,7 @@ import { Icon } from "astro-icon/components";
             if (tabId === 'posts') refreshPostList();
             if (tabId === 'diaries') refreshDiaryList();
             if (tabId === 'dashboard') refreshStats();
+            if (tabId === 'albums') refreshAlbumList();
         });
     });
     
@@ -470,6 +567,221 @@ import { Icon } from "astro-icon/components";
         }
     };
 
+    async function refreshAlbumList() {
+        console.log("Starting to render album list...");
+        const listContainer = document.getElementById('albums-list');
+        if (!listContainer) {
+            console.error("Target container #albums-list not found!");
+            return;
+        }
+
+        try {
+            const res = await authFetch('http://localhost:8080/api/admin/albums');
+            const albums = await res.json();
+            console.log("Albums data:", albums);
+
+            listContainer.innerHTML = albums.map(album => `
+                <div class="bg-white dark:bg-[#25262b] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden group">
+                    <div class="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                        <img src="${album.cover}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                            onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='/images/logo.png';}else{this.style.display='none';}" />
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button onclick="window.managePhotos('${album.id}')" 
+                                    class="px-3 py-1 bg-white rounded-full text-orange-500 text-xs font-bold hover:scale-110 transition">
+                                管理
+                            </button>
+                            <button onclick="window.deleteAlbum('${album.id}')" 
+                                    class="px-3 py-1 bg-white rounded-full text-red-500 text-xs font-bold hover:scale-110 transition">
+                                删除
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-slate-800 dark:text-gray-100 truncate">${album.info.title || album.id}</h4>
+                        <p class="text-xs text-slate-400 mt-1">${album.info.date || '未设置日期'}</p>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error("加载相册失败");
+        }
+    }
+
+    // 删除相册逻辑
+    (window as any).deleteAlbum = async (id: string) => {
+        if (!confirm(`确定要物理删除相册 [${id}] 吗？此操作不可恢复！`)) return;
+        try {
+            const res = await authFetch(`http://localhost:8080/api/admin/albums/${id}`, { method: 'DELETE' });
+            if (res.ok) refreshAlbumList();
+        } catch (e) { alert("删除失败"); }
+    };
+
+    (window as any).managePhotos = (albumID: string) => {
+        console.log("正在打开相册管理面板，ID:", albumID);
+    
+        // 1. 获取弹窗元素
+        const dialog = document.getElementById('photo-manager-dialog') as any;
+        const mgrIdLabel = document.getElementById('mgr-album-id');
+    
+        if (!dialog || !mgrIdLabel) {
+            console.error("找不到相册管理弹窗元素");
+            return;
+        }
+
+        // 2. 设置当前操作的相册 ID 到 UI
+        mgrIdLabel.innerText = albumID;
+    
+        // 3. 唤起原生弹窗
+        dialog.showModal();
+    
+        // 4. 加载该相册下的文件列表
+        refreshPhotoGrid(albumID);
+    };
+
+    const albumDialog = document.getElementById('album-dialog');
+    const newAlbumBtn = document.getElementById('new-album-btn');
+
+    // 2. 绑定点击事件以显示弹窗
+    if (newAlbumBtn && albumDialog) {
+        newAlbumBtn.addEventListener('click', () => {
+            // 使用 showModal() 可以显示带背景遮罩的原生弹窗 
+            (albumDialog as any).showModal(); 
+        });
+    }
+
+    // 绑定“新建相册”提交
+    document.getElementById('confirm-create-album')?.addEventListener('click', async () => {
+        const id = (document.getElementById('album-id') as HTMLInputElement).value.trim();
+        const title = (document.getElementById('album-title') as HTMLInputElement).value.trim();
+    
+        if (!id || !title) return alert("相册 ID 和标题是必填项");
+
+        const payload = {
+            id: id,
+            info: {
+                title: title,
+                description: (document.getElementById('album-desc') as HTMLTextAreaElement).value.trim(),
+                date: (document.getElementById('album-date') as HTMLInputElement).value || new Date().toISOString().split('T')[0],
+                location: (document.getElementById('album-location') as HTMLInputElement).value.trim(),
+                tags: (document.getElementById('album-tags') as HTMLInputElement).value
+                    .split(',')
+                    .map(t => t.trim())
+                    .filter(Boolean),
+                layout: (document.getElementById('album-layout') as HTMLSelectElement).value,
+                columns: parseInt((document.getElementById('album-columns') as HTMLInputElement).value) || 3,
+                hidden: (document.getElementById('album-hidden') as HTMLInputElement).checked,
+                mode: "local" // 默认为本地扫描模式
+            }
+        };
+
+        try {
+            const res = await authFetch('http://localhost:8080/api/admin/albums', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("相册配置已生成！");
+                (document.getElementById('album-dialog') as any).close();
+            
+                // 清空表单
+                const fields = ['album-id', 'album-title', 'album-desc', 'album-location', 'album-tags'];
+                fields.forEach(f => (document.getElementById(f) as any).value = "");
+                refreshAlbumList(); // 重新加载列表
+            }
+        } catch (e) {
+            alert("创建失败，请检查后端终端报错");
+        }
+    });
+
+    // 挂载到 window 供列表调用
+    (window as any).openPhotoManager = async (albumID: string) => {
+        document.getElementById('mgr-album-id').innerText = albumID;
+        const dialog = document.getElementById('photo-manager-dialog') as any;
+        dialog.showModal();
+    
+        // 加载当前相册的图片列表
+        refreshPhotoGrid(albumID);
+    };
+
+    // 刷新图片网格（需要后端增加一个获取单相册文件列表的接口，或通过 AlbumListItem 获取）
+    async function refreshPhotoGrid(albumID) {
+        const grid = document.getElementById('mgr-photos-grid');
+        if (!grid) return;
+    
+        try {
+            const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/files`);
+            
+            if (res.ok) {
+                const files = await res.json();
+                if (files.length === 0) {
+                    grid.innerHTML = '<p class="col-span-4 text-center text-gray-400">暂无图片，请上传</p>';
+                } else {
+                    grid.innerHTML = files.map(file => `
+                        <div class="relative group aspect-square rounded-xl overflow-hidden border dark:border-gray-800 bg-gray-50">
+                            <img src="/images/albums/${albumID}/${file}?t=${Date.now()}" class="w-full h-full object-cover" />
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                ${file === 'cover.jpg' ? 
+                                    '<span class="bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full">当前封面</span>' : 
+                                    `<button onclick="window.setAsCover('${albumID}', '${file}')" class="bg-white text-black text-[10px] px-2 py-1 rounded-full hover:bg-orange-500 hover:text-white transition">设为封面</button>`
+                                }
+                                <button onclick="window.deletePhoto('${albumID}', '${file}')" class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">删除图片</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                grid.innerHTML = '<p class="col-span-4 text-center text-red-400">加载失败</p>';
+            }            
+        } catch (e) {
+            grid.innerHTML = '<p class="col-span-full text-center text-red-400">读取文件失败</p>';
+        }
+    }
+
+    (window as any).setAsCover = async (albumID, filename) => {
+        const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/set-cover`, {
+            method: 'POST',
+            body: JSON.stringify({ filename })
+        });
+        if (res.ok) {
+            refreshPhotoGrid(albumID);
+            refreshAlbumList(); // 列表页封面同步更新
+        }
+    };
+
+    (window as any).deletePhoto = async (albumID, filename) => {
+        if (!confirm(`确定删除图片 ${filename} 吗？`)) return;
+        const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/files/${filename}`, {
+            method: 'DELETE'
+        });
+        if (res.ok) refreshPhotoGrid(albumID);
+    };
+
+    // 处理图片上传
+    document.getElementById('photo-upload-input')?.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        const albumID = document.getElementById('mgr-album-id').innerText;
+        if (!files || files.length === 0) return;
+
+        for (const f of files) {
+            const formData = new FormData();
+            formData.append('file', f); 
+            formData.append('slug', `albums/${albumID}`);
+            try {
+                const res = await authFetch('http://localhost:8080/api/admin/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) console.log(`文件 ${f.name} 上传成功`);
+            } catch (err) {
+                console.error("上传失败", err);
+            }
+        }
+        alert("上传成功！由于 Astro 静态资源限制，新图片可能需要 Rebuild 后在预览中可见。");
+        refreshPhotoGrid(albumID);
+        refreshAlbumList();
+    });
+
     // --- 3. 初始执行 ---
     // 根据当前选中的 Tab 初始化
     const activeTab = document.querySelector('.nav-item.active')?.getAttribute('data-tab');
@@ -479,7 +791,11 @@ import { Icon } from "astro-icon/components";
         refreshDiaryList();
     } else if (activeTab === 'dashboard') {
         /* 初始化控制台数据 */
-        refreshStats()
+        refreshStats();
+    } else if (activeTab === 'albums') {
+        refreshAlbumList();
+        // 强制显示容器
+        document.getElementById('albums-view')?.classList.remove('hidden');
     }
     
 

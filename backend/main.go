@@ -35,12 +35,14 @@ func main() {
 	systemService := &service.SystemService{}
 	diaryService := &service.DiaryService{}
 	dashboardService := &service.DashboardService{DB: db}
+	albumService := &service.AlbumService{}
 	// 第二步：将 service 注入 Controller
 	postCtrl := &controller.PostController{PostService: postService}
 	authCtrl := &controller.AuthController{AuthService: authService}
 	systemCtrl := &controller.SystemController{SystemService: systemService}
 	diaryCtrl := &controller.DiaryController{DiaryService: diaryService}
 	dashboardCtrl := &controller.DashboardController{DashboardService: dashboardService}
+	albumCtrl := &controller.AlbumController{AlbumService: albumService}
 
 	// 3. 设置 Gin 路由
 	r := gin.Default()
@@ -64,6 +66,12 @@ func main() {
 		admin.POST("/diaries", diaryCtrl.Create)
 		admin.DELETE("/diaries/:id", diaryCtrl.Delete)
 		admin.GET("/stats", dashboardCtrl.GetStats)
+		admin.GET("/albums", albumCtrl.List)
+		admin.POST("/albums", albumCtrl.Create)
+		admin.DELETE("/albums/:id", albumCtrl.Delete)
+		admin.GET("/albums/:id/files", albumCtrl.GetFiles)
+		admin.POST("/albums/:id/set-cover", albumCtrl.SetCover)
+		admin.DELETE("/albums/:id/files/:filename", albumCtrl.DeletePhoto)
 	}
 	r.Static("/preview-cache", "../frontend/public/preview-cache")
 

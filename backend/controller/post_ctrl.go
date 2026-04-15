@@ -42,6 +42,8 @@ func (pc *PostController) HandleUpload(c *gin.Context) {
 	if slug == "" {
 		slug = "preview-cache"
 	}
+	// 获取 is_cover 参数
+	isCover := c.PostForm("is_cover") == "true"
 
 	file, err := c.FormFile("file") // 严格匹配前端 append('file', ...)
 	if err != nil {
@@ -54,7 +56,7 @@ func (pc *PostController) HandleUpload(c *gin.Context) {
 
 	// 调用 Service
 
-	fileName, err := pc.PostService.SavePostResource(slug, file)
+	fileName, err := pc.PostService.SavePostResource(slug, file, isCover)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  err.Error(),
