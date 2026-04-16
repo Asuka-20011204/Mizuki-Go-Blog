@@ -37,7 +37,7 @@ window.handleDelete = async (slug: string) => {
             const err = await res.json();
             alert("删除失败：" + (err.error || "未知错误"));
         }
-    } catch(e) {
+    } catch (e) {
         alert("请求失败");
     }
 };
@@ -202,10 +202,10 @@ async function refreshPhotoGrid(albumID: string) {
                     <div class="relative group aspect-square rounded-xl overflow-hidden border dark:border-gray-800 bg-gray-50">
                         <img src="/images/albums/${albumID}/${file}?t=${Date.now()}" class="w-full h-full object-cover" />
                         <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                            ${file === 'cover.jpg' ? 
-                                '<span class="bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full">当前封面</span>' : 
-                                `<button onclick="window.setAsCover('${albumID}', '${file}')" class="bg-white text-black text-[10px] px-2 py-1 rounded-full hover:bg-orange-500 hover:text-white transition">设为封面</button>`
-                            }
+                            ${file === 'cover.jpg' ?
+                        '<span class="bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full">当前封面</span>' :
+                        `<button onclick="window.setAsCover('${albumID}', '${file}')" class="bg-white text-black text-[10px] px-2 py-1 rounded-full hover:bg-orange-500 hover:text-white transition">设为封面</button>`
+                    }
                             <button onclick="window.deletePhoto('${albumID}', '${file}')" class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">删除图片</button>
                         </div>
                     </div>
@@ -231,8 +231,8 @@ async function refreshStats() {
         if (statCategories) statCategories.innerText = data.categoryCount;
         if (statDays) statDays.innerText = data.runningDays;
         if (statWords) {
-            statWords.innerText = data.totalWords > 10000 
-                ? (data.totalWords / 1000).toFixed(1) + 'k' 
+            statWords.innerText = data.totalWords > 10000
+                ? (data.totalWords / 1000).toFixed(1) + 'k'
                 : data.totalWords;
         }
     } catch (e) {
@@ -254,12 +254,12 @@ function resetDiaryForm() {
 async function triggerRebuild() {
     const rebuildBtn = document.getElementById('rebuild-btn');
     if (!rebuildBtn) return;
-    
+
     const originalText = rebuildBtn.innerHTML;
     rebuildBtn.disabled = true;
     rebuildBtn.innerHTML = `<span>构建中...</span>`;
     rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
-    
+
     try {
         const res = await authFetch('http://localhost:8080/api/admin/rebuild', { method: 'POST' });
         if (res.ok) {
@@ -305,6 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabId === 'diaries') refreshDiaryList();
             if (tabId === 'dashboard') refreshStats();
             if (tabId === 'albums') refreshAlbumList();
+            if (tabId === 'settings') {
+                // 加载配置数据
+                if (typeof window.loadConfig === 'function') {
+                    window.loadConfig();
+                }
+            }
         });
     });
 
@@ -445,6 +451,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+    const saveBtn = document.getElementById('save-config-btn');
+    saveBtn?.addEventListener('click', saveConfig);
+
     // 重构按钮
     const rebuildBtn = document.getElementById('rebuild-btn') as HTMLButtonElement;
     rebuildBtn?.addEventListener('click', async () => {
@@ -486,6 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (activeTab === 'albums') {
         refreshAlbumList();
         document.getElementById('albums-view')?.classList.remove('hidden');
+    } else if (activeTab === 'settings') {
+        loadConfig();
     } else {
         // 默认激活 dashboard 但未选中时，可手动刷新 stats
         const dashboardView = document.getElementById('dashboard-view');
@@ -494,3 +506,553 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+// ---------- 配置管理 ----------
+
+interface FullConfig {
+    siteConfig: any;
+    fullscreenWallpaperConfig: any;
+    navBarConfig: any;
+    profileConfig: any;
+    licenseConfig: any;
+    expressiveCodeConfig: any;
+    commentConfig: any;
+    announcementConfig: any;
+    musicPlayerConfig: any;
+    footerConfig: any;
+    sidebarLayoutConfig: any;
+    sakuraConfig: any;
+    pioConfig: any;
+}
+
+let currentConfig: FullConfig | null = null;
+
+async function loadConfig() {
+    try {
+        const res = await authFetch('http://localhost:8080/api/admin/config');
+        if (!res.ok) throw new Error('加载配置失败');
+        const config = await res.json() as FullConfig;
+        currentConfig = config;
+        populateConfigForm(config);  // config 类型明确为 FullConfig
+    } catch (e) {
+        console.error('加载配置出错', e);
+        alert('加载配置失败，请检查后端服务');
+    }
+}
+
+function populateConfigForm(cfg: FullConfig) {
+    const s = cfg.siteConfig;
+    const fw = cfg.fullscreenWallpaperConfig;
+    const nav = cfg.navBarConfig;
+    const prof = cfg.profileConfig;
+    const music = cfg.musicPlayerConfig;
+    const sakura = cfg.sakuraConfig;
+    const pio = cfg.pioConfig;
+    const sidebar = cfg.sidebarLayoutConfig;
+    const comment = cfg.commentConfig;
+    const license = cfg.licenseConfig;
+    const code = cfg.expressiveCodeConfig;
+    const toc = s.toc;
+    const font = s.font;
+
+    // ----- 基础配置 -----
+    setValue('cfg-site-title', s.title);
+    setValue('cfg-site-subtitle', s.subtitle);
+    setValue('cfg-site-url', s.siteURL);
+    setValue('cfg-site-start-date', s.siteStartDate?.split('T')[0] || '');
+    setValue('cfg-theme-hue', s.themeColor?.hue ?? 230);
+    setChecked('cfg-theme-fixed', s.themeColor?.fixed ?? false);
+    setValue('cfg-timezone', s.timeZone ?? 8);
+    setValue('cfg-lang', s.lang ?? 'zh_CN');
+
+    // 个人资料
+    setValue('cfg-profile-avatar', prof?.avatar ?? '');
+    setValue('cfg-profile-name', prof?.name ?? '');
+    setValue('cfg-profile-bio', prof?.bio ?? '');
+    setChecked('cfg-profile-typewriter-enable', prof?.typewriter?.enable ?? true);
+    setValue('cfg-profile-typewriter-speed', prof?.typewriter?.speed ?? 80);
+    // 社交链接：将对象数组格式化为每行一个 JSON 字符串
+    const linksJson = (prof?.links || []).map((l: any) => JSON.stringify(l)).join('\n');
+    setValue('cfg-profile-links', linksJson);
+
+    // 公告
+    const ann = cfg.announcementConfig;
+    setChecked('cfg-announce-enable', ann?.enable ?? true); // 注意公告没有全局 enable，通常直接显示；但保留备用
+    setValue('cfg-announce-title', ann?.title ?? '');
+    setValue('cfg-announce-content', ann?.content ?? '');
+    setChecked('cfg-announce-closable', ann?.closable ?? true);
+    setChecked('cfg-announce-link-enable', ann?.link?.enable ?? true);
+    setValue('cfg-announce-link-text', ann?.link?.text ?? '');
+    setValue('cfg-announce-link-url', ann?.link?.url ?? '');
+    setChecked('cfg-announce-link-external', ann?.link?.external ?? false);
+
+    // 页脚
+    const footer = cfg.footerConfig;
+    setChecked('cfg-footer-enable', footer?.enable ?? false);
+    setValue('cfg-footer-html', footer?.customHtml ?? '');
+
+    // 特色页面开关
+    const fp = s.featurePages || {};
+    setChecked('cfg-page-anime', fp.anime ?? true);
+    setChecked('cfg-page-diary', fp.diary ?? true);
+    setChecked('cfg-page-friends', fp.friends ?? true);
+    setChecked('cfg-page-projects', fp.projects ?? false);
+    setChecked('cfg-page-skills', fp.skills ?? true);
+    setChecked('cfg-page-timeline', fp.timeline ?? true);
+    setChecked('cfg-page-albums', fp.albums ?? true);
+    setChecked('cfg-page-devices', fp.devices ?? false);
+
+    // 文章列表布局
+    setValue('cfg-postlist-default', s.postListLayout?.defaultMode ?? 'list');
+    setChecked('cfg-postlist-switch', s.postListLayout?.allowSwitch ?? true);
+    setChecked('cfg-tag-newstyle', s.tagStyle?.useNewStyle ?? false);
+
+    // 整体布局
+    setValue('cfg-wallpaper-mode', s.wallpaperMode?.defaultMode ?? 'banner');
+    setValue('cfg-mode-switch-display', s.wallpaperMode?.showModeSwitchOnMobile ?? 'desktop');
+
+    // 横幅配置
+    const banner = s.banner;
+    setTextareaLines('cfg-banner-desktop', banner?.src?.desktop);
+    setTextareaLines('cfg-banner-mobile', banner?.src?.mobile);
+    setValue('cfg-banner-position', banner?.position ?? 'center');
+    setChecked('cfg-banner-carousel-enable', banner?.carousel?.enable ?? true);
+    setValue('cfg-banner-carousel-interval', banner?.carousel?.interval ?? 1.5);
+    setChecked('cfg-banner-waves-enable', banner?.waves?.enable ?? true);
+    setChecked('cfg-banner-waves-perf', banner?.waves?.performanceMode ?? false);
+    setChecked('cfg-banner-waves-mobiledisable', banner?.waves?.mobileDisable ?? false);
+    setChecked('cfg-banner-homeText-enable', banner?.homeText?.enable ?? true);
+    setValue('cfg-banner-homeTitle', banner?.homeText?.title ?? '');
+    setTextareaLines('cfg-banner-subtitles', banner?.homeText?.subtitle);
+    setChecked('cfg-banner-typewriter-enable', banner?.homeText?.typewriter?.enable ?? true);
+    setValue('cfg-banner-typewriter-speed', banner?.homeText?.typewriter?.speed ?? 100);
+    setValue('cfg-banner-typewriter-delete', banner?.homeText?.typewriter?.deleteSpeed ?? 50);
+    setValue('cfg-banner-typewriter-pause', banner?.homeText?.typewriter?.pauseTime ?? 2000);
+    setValue('cfg-navbar-transparent', banner?.navbar?.transparentMode ?? 'semifull');
+
+    // 全屏壁纸
+    setTextareaLines('cfg-fullscreen-desktop', fw?.src?.desktop);
+    setTextareaLines('cfg-fullscreen-mobile', fw?.src?.mobile);
+    setValue('cfg-fullscreen-position', fw?.position ?? 'center');
+    setChecked('cfg-fullscreen-carousel-enable', fw?.carousel?.enable ?? true);
+    setValue('cfg-fullscreen-carousel-interval', fw?.carousel?.interval ?? 5);
+    setValue('cfg-fullscreen-opacity', fw?.opacity ?? 0.8);
+    setValue('cfg-fullscreen-blur', fw?.blur ?? 1);
+    setValue('cfg-fullscreen-zindex', fw?.zIndex ?? -1);
+
+    // 导航栏标题
+    setValue('cfg-navbar-title-text', s.navbarTitle?.text ?? '');
+    setValue('cfg-navbar-title-icon', s.navbarTitle?.icon ?? '');
+
+    // 字体配置
+    setValue('cfg-font-ascii-family', font?.asciiFont?.fontFamily ?? '');
+    setValue('cfg-font-ascii-weight', font?.asciiFont?.fontWeight ?? '400');
+    setValue('cfg-font-ascii-files', (font?.asciiFont?.localFonts || []).join(','));
+    setChecked('cfg-font-compress-ascii', font?.asciiFont?.enableCompress ?? true);
+    setValue('cfg-font-cjk-family', font?.cjkFont?.fontFamily ?? '');
+    setValue('cfg-font-cjk-weight', font?.cjkFont?.fontWeight ?? '500');
+    setValue('cfg-font-cjk-files', (font?.cjkFont?.localFonts || []).join(','));
+    setChecked('cfg-font-compress-cjk', font?.cjkFont?.enableCompress ?? true);
+
+    // 目录 TOC
+    setChecked('cfg-toc-enable', toc?.enable ?? true);
+    setValue('cfg-toc-depth', toc?.depth ?? 2);
+    setChecked('cfg-toc-jpbadge', toc?.useJapaneseBadge ?? true);
+
+    // 评论
+    setChecked('cfg-comment-enable', comment?.enable ?? false);
+    setValue('cfg-twikoo-envid', comment?.twikoo?.envId ?? '');
+    setValue('cfg-twikoo-lang', comment?.twikoo?.lang ?? 'en');
+
+    // 版权
+    setChecked('cfg-license-enable', license?.enable ?? true);
+    setValue('cfg-license-name', license?.name ?? '');
+    setValue('cfg-license-url', license?.url ?? '');
+
+    // 代码块
+    setValue('cfg-code-theme', code?.theme ?? 'github-dark');
+    setChecked('cfg-code-hideTransition', code?.hideDuringThemeTransition ?? true);
+
+    // 音乐播放器
+    setChecked('cfg-music-enable', music?.enable ?? false);
+    setValue('cfg-music-mode', music?.mode ?? 'meting');
+    setValue('cfg-meting-api', music?.meting_api ?? '');
+    setValue('cfg-music-id', music?.id ?? '');
+    setValue('cfg-music-server', music?.server ?? 'netease');
+    setValue('cfg-music-type', music?.type ?? 'playlist');
+
+    // 樱花特效
+    setChecked('cfg-sakura-enable', sakura?.enable ?? false);
+    setValue('cfg-sakura-num', sakura?.sakuraNum ?? 21);
+    setValue('cfg-sakura-size-min', sakura?.size?.min ?? 0.5);
+    setValue('cfg-sakura-size-max', sakura?.size?.max ?? 1.1);
+    setValue('cfg-sakura-opacity-min', sakura?.opacity?.min ?? 0.3);
+    setValue('cfg-sakura-opacity-max', sakura?.opacity?.max ?? 0.9);
+    setValue('cfg-sakura-horiz-min', sakura?.speed?.horizontal?.min ?? -1.7);
+    setValue('cfg-sakura-horiz-max', sakura?.speed?.horizontal?.max ?? -1.2);
+    setValue('cfg-sakura-vert-min', sakura?.speed?.vertical?.min ?? 1.5);
+    setValue('cfg-sakura-vert-max', sakura?.speed?.vertical?.max ?? 2.2);
+    setValue('cfg-sakura-rotation', sakura?.speed?.rotation ?? 0.03);
+    setValue('cfg-sakura-fade', sakura?.speed?.fadeSpeed ?? 0.03);
+    setValue('cfg-sakura-zindex', sakura?.zIndex ?? 100);
+
+    // Live2D 看板娘
+    setChecked('cfg-pio-enable', pio?.enable ?? true);
+    setValue('cfg-pio-models', (pio?.models || []).join(','));
+    setValue('cfg-pio-position', pio?.position ?? 'left');
+    setValue('cfg-pio-width', pio?.width ?? 280);
+    setValue('cfg-pio-height', pio?.height ?? 250);
+    setValue('cfg-pio-mode', pio?.mode ?? 'draggable');
+    setChecked('cfg-pio-hidden-mobile', pio?.hiddenOnMobile ?? true);
+    setValue('cfg-pio-welcome', pio?.dialog?.welcome ?? '');
+    setTextareaLines('cfg-pio-touch', pio?.dialog?.touch);
+    setValue('cfg-pio-home', pio?.dialog?.home ?? '');
+    setTextareaLines('cfg-pio-skin', pio?.dialog?.skin);
+    setValue('cfg-pio-close', pio?.dialog?.close ?? '');
+    setValue('cfg-pio-link', pio?.dialog?.link ?? '');
+
+    // 侧边栏布局
+    setValue('cfg-sidebar-position', sidebar?.position ?? 'both');
+    renderSidebarComponents(sidebar?.components || []);
+
+    // 其他杂项
+    setChecked('cfg-show-lastmod', s.showLastModified ?? true);
+    setChecked('cfg-generate-og', s.generateOgImages ?? false);
+}
+
+function renderSidebarComponents(components: any[]) {
+    const container = document.getElementById('sidebar-components-list');
+    if (!container) return;
+
+    // 确保组件顺序显示
+    container.innerHTML = components.map(comp => {
+        const type = comp.type;
+        const enable = comp.enable ?? true;
+        const order = comp.order ?? 0;
+        const sidebar = comp.sidebar ?? 'left';
+        return `
+        <div class="flex items-center justify-between p-2 border rounded dark:border-gray-700 bg-white dark:bg-gray-800/30">
+            <span class="text-sm font-medium">${type}</span>
+            <div class="flex items-center gap-2">
+                <label class="text-xs flex items-center gap-1">
+                    <input type="checkbox" data-comp="${type}-enable" ${enable ? 'checked' : ''} class="accent-blue-500 w-4 h-4" /> 启用
+                </label>
+                <input type="number" data-comp="${type}-order" value="${order}" class="w-16 p-1 text-sm rounded border dark:bg-gray-800" min="0" />
+                <select data-comp="${type}-sidebar" class="text-sm p-1 rounded border dark:bg-gray-800">
+                    <option value="left" ${sidebar === 'left' ? 'selected' : ''}>左侧</option>
+                    <option value="right" ${sidebar === 'right' ? 'selected' : ''}>右侧</option>
+                </select>
+            </div>
+        </div>
+    `}).join('');
+}
+
+function collectConfigData(): FullConfig {
+    // 构建完整的配置对象，与后端 FullConfig 结构一致
+    const s: any = {};
+    const fw: any = {};
+    const pio: any = {};
+    const music: any = {};
+    const sakura: any = {};
+    const comment: any = { twikoo: {} };
+    const license: any = {};
+    const code: any = {};
+
+    // 基础
+    s.title = getValue('cfg-site-title');
+    s.subtitle = getValue('cfg-site-subtitle');
+    s.siteURL = getValue('cfg-site-url');
+    s.siteStartDate = getValue('cfg-site-start-date');
+    s.timeZone = parseInt(getValue('cfg-timezone')) || 8;
+    s.lang = getValue('cfg-lang');
+    s.themeColor = { hue: parseInt(getValue('cfg-theme-hue')) || 230, fixed: getChecked('cfg-theme-fixed') };
+
+    // 特色页面
+    s.featurePages = {
+        anime: getChecked('cfg-page-anime'),
+        diary: getChecked('cfg-page-diary'),
+        friends: getChecked('cfg-page-friends'),
+        projects: getChecked('cfg-page-projects'),
+        skills: getChecked('cfg-page-skills'),
+        timeline: getChecked('cfg-page-timeline'),
+        albums: getChecked('cfg-page-albums'),
+        devices: getChecked('cfg-page-devices'),
+    };
+
+    s.postListLayout = { defaultMode: getValue('cfg-postlist-default'), allowSwitch: getChecked('cfg-postlist-switch') };
+    s.tagStyle = { useNewStyle: getChecked('cfg-tag-newstyle') };
+    s.wallpaperMode = { defaultMode: getValue('cfg-wallpaper-mode'), showModeSwitchOnMobile: getValue('cfg-mode-switch-display') };
+
+    // 横幅
+    s.banner = {
+        src: {
+            desktop: getTextareaLines('cfg-banner-desktop'),
+            mobile: getTextareaLines('cfg-banner-mobile'),
+        },
+        position: getValue('cfg-banner-position'),
+        carousel: {
+            enable: getChecked('cfg-banner-carousel-enable'),
+            interval: parseFloat(getValue('cfg-banner-carousel-interval')) || 1.5,
+        },
+        waves: {
+            enable: getChecked('cfg-banner-waves-enable'),
+            performanceMode: getChecked('cfg-banner-waves-perf'),
+            mobileDisable: getChecked('cfg-banner-waves-mobiledisable'),
+        },
+        homeText: {
+            enable: getChecked('cfg-banner-homeText-enable'),
+            title: getValue('cfg-banner-homeTitle'),
+            subtitle: getTextareaLines('cfg-banner-subtitles'),
+            typewriter: {
+                enable: getChecked('cfg-banner-typewriter-enable'),
+                speed: parseInt(getValue('cfg-banner-typewriter-speed')) || 100,
+                deleteSpeed: parseInt(getValue('cfg-banner-typewriter-delete')) || 50,
+                pauseTime: parseInt(getValue('cfg-banner-typewriter-pause')) || 2000,
+            },
+        },
+        navbar: { transparentMode: getValue('cfg-navbar-transparent') },
+        // 保留原样未修改的字段从 currentConfig 合并，避免丢失
+        imageApi: currentConfig?.siteConfig?.banner?.imageApi || { enable: false, url: '' },
+        credit: currentConfig?.siteConfig?.banner?.credit || { enable: false, text: '', url: '' },
+    };
+
+    // 全屏壁纸
+    fw.src = {
+        desktop: getTextareaLines('cfg-fullscreen-desktop'),
+        mobile: getTextareaLines('cfg-fullscreen-mobile'),
+    };
+    fw.position = getValue('cfg-fullscreen-position');
+    fw.carousel = {
+        enable: getChecked('cfg-fullscreen-carousel-enable'),
+        interval: parseFloat(getValue('cfg-fullscreen-carousel-interval')) || 5,
+    };
+    fw.opacity = parseFloat(getValue('cfg-fullscreen-opacity')) || 0.8;
+    fw.blur = parseInt(getValue('cfg-fullscreen-blur')) || 1;
+    fw.zIndex = parseInt(getValue('cfg-fullscreen-zindex')) || -1;
+
+    // 导航栏标题
+    s.navbarTitle = {
+        text: getValue('cfg-navbar-title-text'),
+        icon: getValue('cfg-navbar-title-icon'),
+    };
+
+    // 字体
+    s.font = {
+        asciiFont: {
+            fontFamily: getValue('cfg-font-ascii-family'),
+            fontWeight: getValue('cfg-font-ascii-weight'),
+            localFonts: getValue('cfg-font-ascii-files').split(',').map(s => s.trim()).filter(Boolean),
+            enableCompress: getChecked('cfg-font-compress-ascii'),
+        },
+        cjkFont: {
+            fontFamily: getValue('cfg-font-cjk-family'),
+            fontWeight: getValue('cfg-font-cjk-weight'),
+            localFonts: getValue('cfg-font-cjk-files').split(',').map(s => s.trim()).filter(Boolean),
+            enableCompress: getChecked('cfg-font-compress-cjk'),
+        },
+    };
+
+    s.toc = {
+        enable: getChecked('cfg-toc-enable'),
+        depth: parseInt(getValue('cfg-toc-depth')) || 2,
+        useJapaneseBadge: getChecked('cfg-toc-jpbadge'),
+    };
+
+    s.showLastModified = getChecked('cfg-show-lastmod');
+    s.generateOgImages = getChecked('cfg-generate-og');
+
+    // 评论
+    comment.enable = getChecked('cfg-comment-enable');
+    comment.twikoo = {
+        envId: getValue('cfg-twikoo-envid'),
+        lang: getValue('cfg-twikoo-lang'),
+    };
+
+    // 版权
+    license.enable = getChecked('cfg-license-enable');
+    license.name = getValue('cfg-license-name');
+    license.url = getValue('cfg-license-url');
+
+    // 代码块
+    code.theme = getValue('cfg-code-theme');
+    code.hideDuringThemeTransition = getChecked('cfg-code-hideTransition');
+
+    // 音乐
+    music.enable = getChecked('cfg-music-enable');
+    music.mode = getValue('cfg-music-mode');
+    music.meting_api = getValue('cfg-meting-api');
+    music.id = getValue('cfg-music-id');
+    music.server = getValue('cfg-music-server');
+    music.type = getValue('cfg-music-type');
+
+    // 樱花
+    sakura.enable = getChecked('cfg-sakura-enable');
+    sakura.sakuraNum = parseInt(getValue('cfg-sakura-num')) || 21;
+    sakura.size = { min: parseFloat(getValue('cfg-sakura-size-min')) || 0.5, max: parseFloat(getValue('cfg-sakura-size-max')) || 1.1 };
+    sakura.opacity = { min: parseFloat(getValue('cfg-sakura-opacity-min')) || 0.3, max: parseFloat(getValue('cfg-sakura-opacity-max')) || 0.9 };
+    sakura.speed = {
+        horizontal: { min: parseFloat(getValue('cfg-sakura-horiz-min')) || -1.7, max: parseFloat(getValue('cfg-sakura-horiz-max')) || -1.2 },
+        vertical: { min: parseFloat(getValue('cfg-sakura-vert-min')) || 1.5, max: parseFloat(getValue('cfg-sakura-vert-max')) || 2.2 },
+        rotation: parseFloat(getValue('cfg-sakura-rotation')) || 0.03,
+        fadeSpeed: parseFloat(getValue('cfg-sakura-fade')) || 0.03,
+    };
+    sakura.zIndex = parseInt(getValue('cfg-sakura-zindex')) || 100;
+
+    // Pio
+    pio.enable = getChecked('cfg-pio-enable');
+    pio.models = getValue('cfg-pio-models').split(',').map(s => s.trim()).filter(Boolean);
+    pio.position = getValue('cfg-pio-position');
+    pio.width = parseInt(getValue('cfg-pio-width')) || 280;
+    pio.height = parseInt(getValue('cfg-pio-height')) || 250;
+    pio.mode = getValue('cfg-pio-mode');
+    pio.hiddenOnMobile = getChecked('cfg-pio-hidden-mobile');
+    pio.dialog = {
+        welcome: getValue('cfg-pio-welcome'),
+        touch: getTextareaLines('cfg-pio-touch'),
+        home: getValue('cfg-pio-home'),
+        skin: getTextareaLines('cfg-pio-skin'),
+        close: getValue('cfg-pio-close'),
+        link: getValue('cfg-pio-link'),
+    };
+
+    // 侧边栏配置 - 基于原有配置更新可编辑字段
+    const originalComponents = currentConfig?.sidebarLayoutConfig?.components || [];
+    const updatedComponents = originalComponents.map(comp => {
+        const type = comp.type;
+        // 从 DOM 获取用户修改的值
+        const enableEl = document.querySelector(`[data-comp="${type}-enable"]`) as HTMLInputElement;
+        const orderEl = document.querySelector(`[data-comp="${type}-order"]`) as HTMLInputElement;
+        const sidebarEl = document.querySelector(`[data-comp="${type}-sidebar"]`) as HTMLSelectElement;
+
+        return {
+            ...comp, // 保留原有所有字段
+            enable: enableEl ? enableEl.checked : comp.enable,
+            order: orderEl ? parseInt(orderEl.value) || 0 : comp.order,
+            sidebar: sidebarEl ? sidebarEl.value : comp.sidebar,
+        };
+    });
+
+    const sidebar = {
+        position: getValue('cfg-sidebar-position'),
+        components: updatedComponents,
+        // 保留原有其他顶层字段
+        defaultAnimation: currentConfig?.sidebarLayoutConfig?.defaultAnimation || { enable: true, baseDelay: 0, increment: 50 },
+        responsive: currentConfig?.sidebarLayoutConfig?.responsive || {
+            breakpoints: { mobile: 768, tablet: 1280, desktop: 1280 },
+            layout: { mobile: 'sidebar', tablet: 'sidebar', desktop: 'sidebar' }
+        }
+    };
+
+    // 个人资料
+    const profileLinksText = getValue('cfg-profile-links');
+    let profileLinks = [];
+    try {
+        profileLinks = profileLinksText.split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
+    } catch (e) { console.warn('解析社交链接 JSON 失败', e); }
+    const profile = {
+        avatar: getValue('cfg-profile-avatar'),
+        name: getValue('cfg-profile-name'),
+        bio: getValue('cfg-profile-bio'),
+        typewriter: {
+            enable: getChecked('cfg-profile-typewriter-enable'),
+            speed: parseInt(getValue('cfg-profile-typewriter-speed')) || 80,
+        },
+        links: profileLinks,
+    };
+
+    // 公告
+    const announcement = {
+        title: getValue('cfg-announce-title'),
+        content: getValue('cfg-announce-content'),
+        closable: getChecked('cfg-announce-closable'),
+        link: {
+            enable: getChecked('cfg-announce-link-enable'),
+            text: getValue('cfg-announce-link-text'),
+            url: getValue('cfg-announce-link-url'),
+            external: getChecked('cfg-announce-link-external'),
+        },
+    };
+
+    // 页脚
+    const footer = {
+        enable: getChecked('cfg-footer-enable'),
+        customHtml: getValue('cfg-footer-html'),
+    };
+    // 在 return 语句中合并
+return {
+    siteConfig: { ...currentConfig?.siteConfig, ...s },
+    fullscreenWallpaperConfig: { ...currentConfig?.fullscreenWallpaperConfig, ...fw },
+    navBarConfig: currentConfig?.navBarConfig || {},
+    profileConfig: { ...currentConfig?.profileConfig, ...profile },
+    licenseConfig: { ...currentConfig?.licenseConfig, ...license },
+    expressiveCodeConfig: { ...currentConfig?.expressiveCodeConfig, ...code },
+    commentConfig: { ...currentConfig?.commentConfig, ...comment },
+    announcementConfig: { ...currentConfig?.announcementConfig, ...announcement },
+    musicPlayerConfig: { ...currentConfig?.musicPlayerConfig, ...music },
+    footerConfig: { ...currentConfig?.footerConfig, ...footer },
+    sidebarLayoutConfig: { ...currentConfig?.sidebarLayoutConfig, ...sidebar },
+    sakuraConfig: { ...currentConfig?.sakuraConfig, ...sakura },
+    pioConfig: { ...currentConfig?.pioConfig, ...pio },
+};
+}
+
+async function saveConfig() {
+    if (!currentConfig) {
+        alert('请先加载配置');
+        return;
+    }
+    const payload = collectConfigData();
+    const statusEl = document.getElementById('config-save-status');
+    try {
+        const res = await authFetch('http://localhost:8080/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            if (statusEl) {
+                statusEl.classList.remove('hidden');
+                statusEl.innerText = '✅ 配置已保存，请触发重构使更改生效';
+                setTimeout(() => statusEl.classList.add('hidden'), 4000);
+            }
+            // 更新本地缓存
+            currentConfig = payload;
+        } else {
+            const err = await res.json();
+            alert('保存失败: ' + (err.error || '未知错误'));
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+// 辅助函数
+function setValue(id: string, value: any) {
+    const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (el) el.value = value?.toString() ?? '';
+}
+function setChecked(id: string, checked: boolean) {
+    const el = document.getElementById(id) as HTMLInputElement;
+    if (el) el.checked = checked;
+}
+function getValue(id: string): string {
+    const el = document.getElementById(id) as any;
+    return el?.value ?? '';
+}
+function getChecked(id: string): boolean {
+    const el = document.getElementById(id) as HTMLInputElement;
+    return el?.checked ?? false;
+}
+function setTextareaLines(id: string, arr: string[] | undefined) {
+    const el = document.getElementById(id) as HTMLTextAreaElement;
+    if (el && Array.isArray(arr)) el.value = arr.join('\n');
+    else if (el) el.value = '';
+}
+function getTextareaLines(id: string): string[] {
+    const el = document.getElementById(id) as HTMLTextAreaElement;
+    return el?.value.split('\n').map(s => s.trim()).filter(Boolean) || [];
+}
+
+// 挂载到 window
+window.loadConfig = loadConfig;
+window.saveConfig = saveConfig;

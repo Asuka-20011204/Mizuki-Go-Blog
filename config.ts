@@ -13,53 +13,13 @@ import type {
 	SiteConfig,
 } from "./types/config";
 import { LinkPreset } from "./types/config";
-import siteConfigJson from "./data/settings.json" with { type: "json" };
-
-/** 深度合并对象，source 中的值会覆盖 target */
-function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
-	const result = { ...target };
-	for (const key in source) {
-		const sourceVal = source[key];
-		const targetVal = result[key];
-		if (sourceVal && typeof sourceVal === 'object' && !Array.isArray(sourceVal) && targetVal && typeof targetVal === 'object') {
-			result[key] = deepMerge(targetVal, sourceVal);
-		} else {
-			result[key] = sourceVal as any;
-		}
-	}
-	return result;
-}
-
-/** 递归处理导航链接，将 { preset: "Home" } 转换为 LinkPreset.Home */
-function resolveNavLinks(links: any[]): any[] {
-	return links.map(link => {
-		if (link && typeof link === 'object' && 'preset' in link) {
-			// 预设链接
-			const presetValue = LinkPreset[link.preset as keyof typeof LinkPreset];
-			if (presetValue === undefined) {
-				console.warn(`Unknown LinkPreset: ${link.preset}`);
-				return link; // fallback
-			}
-			return presetValue;
-		}
-		if (link && typeof link === 'object' && Array.isArray(link.children)) {
-			// 有子菜单的自定义链接
-			return {
-				...link,
-				children: resolveNavLinks(link.children)
-			};
-		}
-		return link;
-	});
-}
-
 
 // 移除i18n导入以避免循环依赖
 
 // 定义站点语言
 const SITE_LANG = "zh_CN"; // 语言代码，例如：'en', 'zh_CN', 'ja' 等。
 const SITE_TIMEZONE = 8; //设置你的网站时区 from -12 to 12 default in UTC+8
-export const defaultSiteConfig: SiteConfig = {
+export const siteConfig: SiteConfig = {
 	title: "Vogel",
 	subtitle: "One demo website",
 	siteURL: "https://mizuki.mysqil.com/", // 请替换为你的站点URL，以斜杠结尾
@@ -241,7 +201,7 @@ export const defaultSiteConfig: SiteConfig = {
 	},
 	showLastModified: true, // 控制“上次编辑”卡片显示的开关
 };
-export const defaultFullscreenWallpaperConfig: FullscreenWallpaperConfig = {
+export const fullscreenWallpaperConfig: FullscreenWallpaperConfig = {
 	src: {
 		desktop: [
 			"/assets/desktop-banner/1.webp",
@@ -270,7 +230,7 @@ export const defaultFullscreenWallpaperConfig: FullscreenWallpaperConfig = {
 	blur: 1, // 背景模糊程度
 };
 
-export const defaultNavBarConfig: NavBarConfig = {
+export const navBarConfig: NavBarConfig = {
 	links: [
 		LinkPreset.Home,
 		LinkPreset.Archive,
@@ -343,7 +303,7 @@ export const defaultNavBarConfig: NavBarConfig = {
 	],
 };
 
-export const defaultProfileConfig: ProfileConfig = {
+export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/avatar.webp", // 相对于 /src 目录。如果以 '/' 开头，则相对于 /public 目录
 	name: "Matsuzaka Yuki",
 	bio: "The world is big, you have to go and see",
@@ -380,13 +340,13 @@ export const defaultProfileConfig: ProfileConfig = {
 	],
 };
 
-export const defaultLicenseConfig: LicenseConfig = {
+export const licenseConfig: LicenseConfig = {
 	enable: true,
 	name: "CC BY-NC-SA 4.0",
 	url: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
 };
 
-export const defaultExpressiveCodeConfig: ExpressiveCodeConfig = {
+export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// 注意：某些样式（如背景颜色）已被覆盖，请参阅 astro.config.mjs 文件。
 	// 请选择深色主题，因为此博客主题目前仅支持深色背景
 	theme: "github-dark",
@@ -394,7 +354,7 @@ export const defaultExpressiveCodeConfig: ExpressiveCodeConfig = {
 	hideDuringThemeTransition: true,
 };
 
-export const defaultCommentConfig: CommentConfig = {
+export const commentConfig: CommentConfig = {
 	enable: false, // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
 	twikoo: {
 		envId: "https://twikoo.vercel.app",
@@ -402,7 +362,7 @@ export const defaultCommentConfig: CommentConfig = {
 	},
 };
 
-export const defaultAnnouncementConfig: AnnouncementConfig = {
+export const announcementConfig: AnnouncementConfig = {
 	title: "Announcement", // 公告标题
 	content: "Welcome to my blog! This is a sample announcement.", // 公告内容
 	closable: true, // 允许用户关闭公告
@@ -414,7 +374,7 @@ export const defaultAnnouncementConfig: AnnouncementConfig = {
 	},
 };
 
-export const defaultMusicPlayerConfig: MusicPlayerConfig = {
+export const musicPlayerConfig: MusicPlayerConfig = {
 	enable: true, // 启用音乐播放器功能
 	mode: "meting", // 音乐播放器模式，可选 "local" 或 "meting"
 	meting_api:
@@ -424,7 +384,7 @@ export const defaultMusicPlayerConfig: MusicPlayerConfig = {
 	type: "playlist", // 播单类型
 };
 
-export const defaultFooterConfig: FooterConfig = {
+export const footerConfig: FooterConfig = {
 	enable: false, // 是否启用Footer HTML注入功能
 	customHtml: "", // HTML格式的自定义页脚信息，例如备案号等，默认留空
 	// 也可以直接编辑 FooterConfig.html 文件来添加备案号等自定义内容
@@ -437,7 +397,7 @@ export const defaultFooterConfig: FooterConfig = {
  * 用于控制侧边栏组件的显示、排序、动画和响应式行为
  * sidebar: 控制组件在左侧栏和右侧栏,注意移动端是不会显示右侧栏的内容(unilateral模式除外),在设置了right属性的时候请确保你使用双侧(both)布局
  */
-export const defaultSidebarLayoutConfig: SidebarLayoutConfig = {
+export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	// 侧边栏位置：单侧(unilateral)或双侧(both)
 	position: "both",
 
@@ -585,7 +545,7 @@ export const defaultSidebarLayoutConfig: SidebarLayoutConfig = {
 	},
 };
 
-export const defaultSakuraConfig: SakuraConfig = {
+export const sakuraConfig: SakuraConfig = {
 	enable: false, // 默认关闭樱花特效
 	sakuraNum: 21, // 樱花数量
 	limitTimes: -1, // 樱花越界限制次数，-1为无限循环
@@ -613,7 +573,7 @@ export const defaultSakuraConfig: SakuraConfig = {
 };
 
 // Pio 看板娘配置
-export const defaultPioConfig: import("./types/config").PioConfig = {
+export const pioConfig: import("./types/config").PioConfig = {
 	enable: true, // 启用看板娘
 	models: ["/pio/models/pio/model.json"], // 默认模型路径
 	position: "left", // 默认位置在右侧
@@ -635,56 +595,6 @@ export const defaultPioConfig: import("./types/config").PioConfig = {
 		link: "https://github.com/matsuzaka-yuki/Mizuki", // 关于链接
 	},
 };
-
-const jsonConfig = siteConfigJson as any;
-
-// 合并 siteConfig
-export const siteConfig: SiteConfig = deepMerge(defaultSiteConfig, jsonConfig.siteConfig ?? {});
-
-// 合并 fullscreenWallpaperConfig
-export const fullscreenWallpaperConfig: FullscreenWallpaperConfig = deepMerge(
-	defaultFullscreenWallpaperConfig,
-	jsonConfig.fullscreenWallpaperConfig ?? {}
-);
-
-// 合并 navBarConfig，并处理 preset 链接
-const rawNavBarLinks = jsonConfig.navBarConfig?.links ?? defaultNavBarConfig.links;
-const resolvedNavLinks = resolveNavLinks(rawNavBarLinks);
-export const navBarConfig: NavBarConfig = {
-	...deepMerge(defaultNavBarConfig, jsonConfig.navBarConfig ?? {}),
-	links: resolvedNavLinks,
-};
-
-// 合并 profileConfig
-export const profileConfig: ProfileConfig = deepMerge(defaultProfileConfig, jsonConfig.profileConfig ?? {});
-
-// 合并 licenseConfig
-export const licenseConfig: LicenseConfig = deepMerge(defaultLicenseConfig, jsonConfig.licenseConfig ?? {});
-
-// 合并 expressiveCodeConfig
-export const expressiveCodeConfig: ExpressiveCodeConfig = deepMerge(defaultExpressiveCodeConfig, jsonConfig.expressiveCodeConfig ?? {});
-
-// 合并 commentConfig
-export const commentConfig: CommentConfig = deepMerge(defaultCommentConfig, jsonConfig.commentConfig ?? {});
-
-// 合并 announcementConfig
-export const announcementConfig: AnnouncementConfig = deepMerge(defaultAnnouncementConfig, jsonConfig.announcementConfig ?? {});
-
-// 合并 musicPlayerConfig
-export const musicPlayerConfig: MusicPlayerConfig = deepMerge(defaultMusicPlayerConfig, jsonConfig.musicPlayerConfig ?? {});
-
-// 合并 footerConfig
-export const footerConfig: FooterConfig = deepMerge(defaultFooterConfig, jsonConfig.footerConfig ?? {});
-
-// 合并 sidebarLayoutConfig
-export const sidebarLayoutConfig: SidebarLayoutConfig = deepMerge(defaultSidebarLayoutConfig, jsonConfig.sidebarLayoutConfig ?? {});
-
-// 合并 sakuraConfig
-export const sakuraConfig: SakuraConfig = deepMerge(defaultSakuraConfig, jsonConfig.sakuraConfig ?? {});
-
-// 合并 pioConfig
-export const pioConfig: import("./types/config").PioConfig = deepMerge(defaultPioConfig, jsonConfig.pioConfig ?? {});
-
 
 // 导出所有配置的统一接口
 export const widgetConfigs = {

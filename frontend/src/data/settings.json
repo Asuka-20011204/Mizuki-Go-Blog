@@ -1,0 +1,441 @@
+{
+  "siteConfig": {
+    "title": "forget-me-not",
+    "subtitle": "勿忘我",
+    "siteURL": "http://asuka-20011204.xyz/",
+    "siteStartDate": "2026-04-16",
+    "timeZone": 8,
+    "lang": "zh_CN",
+    "themeColor": {
+      "hue": 230,
+      "fixed": false
+    },
+    "featurePages": {
+      "albums": true,
+      "anime": true,
+      "devices": false,
+      "diary": true,
+      "friends": true,
+      "projects": false,
+      "skills": false,
+      "timeline": false
+    },
+    "navbarTitle": {
+      "text": "Vogel",
+      "icon": "assets/home/home.png"
+    },
+    "bangumi": {
+      "userId": "your-bangumi-id"
+    },
+    "anime": {
+      "mode": "local"
+    },
+    "postListLayout": {
+      "defaultMode": "list",
+      "allowSwitch": true
+    },
+    "tagStyle": {
+      "useNewStyle": false
+    },
+    "wallpaperMode": {
+      "defaultMode": "banner",
+      "showModeSwitchOnMobile": "desktop"
+    },
+    "banner": {
+      "src": {
+        "desktop": [
+          "/assets/desktop-banner/1.webp",
+          "/assets/desktop-banner/2.webp",
+          "/assets/desktop-banner/3.webp",
+          "/assets/desktop-banner/4.webp",
+          "/assets/desktop-banner/6.webp"
+        ],
+        "mobile": [
+          "/assets/mobile-banner/1.webp",
+          "/assets/mobile-banner/2.webp",
+          "/assets/mobile-banner/3.webp",
+          "/assets/mobile-banner/4.webp",
+          "/assets/mobile-banner/5.webp",
+          "/assets/mobile-banner/6.webp"
+        ]
+      },
+      "position": "center",
+      "carousel": {
+        "enable": true,
+        "interval": 1.5
+      },
+      "waves": {
+        "enable": true,
+        "performanceMode": false,
+        "mobileDisable": false
+      },
+      "imageApi": {
+        "enable": false,
+        "url": "http://domain.com/api_v2.php?format=text\u0026count=4"
+      },
+      "homeText": {
+        "enable": true,
+        "title": "私を忘れないで",
+        "subtitle": [
+          "特別なことはないけど、君がいると十分です",
+          "今でもあなたは私の光",
+          "君ってさ、知らないうちに私の毎日になってたよ",
+          "君と話すと、なんか毎日がちょっと楽しくなるんだ",
+          "今日はなんでもない日。でも、ちょっとだけいい日"
+        ],
+        "typewriter": {
+          "enable": true,
+          "speed": 100,
+          "deleteSpeed": 50,
+          "pauseTime": 2000
+        }
+      },
+      "credit": {
+        "enable": false,
+        "text": "Describe",
+        "url": ""
+      },
+      "navbar": {
+        "transparentMode": "semifull"
+      }
+    },
+    "toc": {
+      "enable": true,
+      "depth": 2,
+      "useJapaneseBadge": true
+    },
+    "generateOgImages": false,
+    "favicon": [],
+    "font": {
+      "asciiFont": {
+        "fontFamily": "ZenMaruGothic-Medium",
+        "fontWeight": "400",
+        "localFonts": [
+          "ZenMaruGothic-Medium.ttf"
+        ],
+        "enableCompress": true
+      },
+      "cjkFont": {
+        "fontFamily": "萝莉体 第二版",
+        "fontWeight": "500",
+        "localFonts": [
+          "萝莉体 第二版.ttf"
+        ],
+        "enableCompress": true
+      }
+    },
+    "showLastModified": true
+  },
+  "fullscreenWallpaperConfig": {
+    "src": {
+      "desktop": [
+        "/assets/desktop-banner/1.webp",
+        "/assets/desktop-banner/2.webp",
+        "/assets/desktop-banner/3.webp",
+        "/assets/desktop-banner/4.webp",
+        "/assets/desktop-banner/6.webp"
+      ],
+      "mobile": [
+        "/assets/mobile-banner/1.webp",
+        "/assets/mobile-banner/2.webp",
+        "/assets/mobile-banner/3.webp",
+        "/assets/mobile-banner/4.webp",
+        "/assets/mobile-banner/5.webp",
+        "/assets/mobile-banner/6.webp"
+      ]
+    },
+    "position": "center",
+    "carousel": {
+      "enable": true,
+      "interval": 5
+    },
+    "zIndex": -1,
+    "opacity": 0.8,
+    "blur": 1
+  },
+  "navBarConfig": {
+    "links": [
+      {
+        "preset": "Home"
+      },
+      {
+        "preset": "Archive"
+      },
+      {
+        "children": [
+          {
+            "external": true,
+            "icon": "fa6-brands:github",
+            "name": "GitHub",
+            "url": "https://github.com/Asuka-20011204"
+          },
+          {
+            "external": true,
+            "icon": "fa6-brands:bilibili",
+            "name": "Bilibili",
+            "url": "https://space.bilibili.com/479044184"
+          },
+          {
+            "external": true,
+            "icon": "mdi:git",
+            "name": "Gitee",
+            "url": "https://gitee.com/Asuka20011204"
+          }
+        ],
+        "icon": "material-symbols:link",
+        "name": "Links",
+        "url": "/links/"
+      },
+      {
+        "children": [
+          {
+            "icon": "material-symbols:book",
+            "name": "Diary",
+            "url": "/diary/"
+          },
+          {
+            "icon": "material-symbols:photo-library",
+            "name": "Gallery",
+            "url": "/albums/"
+          }
+        ],
+        "icon": "material-symbols:person",
+        "name": "My",
+        "url": "/content/"
+      },
+      {
+        "children": [
+          {
+            "icon": "material-symbols:person",
+            "name": "About",
+            "url": "/about/"
+          },
+          {
+            "icon": "material-symbols:group",
+            "name": "Friends",
+            "url": "/friends/"
+          }
+        ],
+        "icon": "material-symbols:info",
+        "name": "About",
+        "url": "/content/"
+      },
+      {
+        "children": [],
+        "icon": "material-symbols:category",
+        "name": "Categories",
+        "url": "#"
+      }
+    ]
+  },
+  "profileConfig": {
+    "avatar": "assets/images/avatar.webp",
+    "name": "鲨鲨Don‘t Cry",
+    "bio": "不要忘记我",
+    "typewriter": {
+      "enable": true,
+      "speed": 80
+    },
+    "links": [
+      {
+        "name": "Bilibli",
+        "icon": "fa6-brands:bilibili",
+        "url": "https://space.bilibili.com/479044184"
+      },
+      {
+        "name": "Gitee",
+        "icon": "mdi:git",
+        "url": "https://gitee.com/Asuka20011204"
+      },
+      {
+        "name": "GitHub",
+        "icon": "fa6-brands:github",
+        "url": "https://github.com/Asuka-20011204"
+      },
+      {
+        "name": "Codeberg",
+        "icon": "simple-icons:codeberg",
+        "url": "https://codeberg.org"
+      },
+      {
+        "name": "Discord",
+        "icon": "fa6-brands:discord",
+        "url": "https://discord.gg/MqW6TcQtVM"
+      }
+    ]
+  },
+  "licenseConfig": {
+    "enable": true,
+    "name": "CC BY-NC-SA 4.0",
+    "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+  },
+  "expressiveCodeConfig": {
+    "theme": "github-dark",
+    "hideDuringThemeTransition": true
+  },
+  "commentConfig": {
+    "enable": false,
+    "twikoo": {
+      "envId": "https://twikoo.vercel.app",
+      "lang": "en"
+    }
+  },
+  "announcementConfig": {
+    "title": "重大通知！！！",
+    "content": "即将运行！！！",
+    "closable": false,
+    "link": {
+      "enable": true,
+      "text": "Learn More",
+      "url": "/about/",
+      "external": true
+    }
+  },
+  "musicPlayerConfig": {
+    "enable": true,
+    "mode": "meting",
+    "meting_api": "https://www.bilibili.uno/api?server=:server\u0026type=:type\u0026id=:id\u0026auth=:auth\u0026r=:r",
+    "id": "14164869977",
+    "server": "netease",
+    "type": "playlist"
+  },
+  "footerConfig": {
+    "enable": false,
+    "customHtml": ""
+  },
+  "sidebarLayoutConfig": {
+    "position": "both",
+    "components": [
+      {
+        "type": "profile",
+        "enable": true,
+        "order": 1,
+        "position": "top",
+        "sidebar": "left",
+        "class": "onload-animation",
+        "animationDelay": 0
+      },
+      {
+        "type": "announcement",
+        "enable": true,
+        "order": 2,
+        "position": "top",
+        "sidebar": "left",
+        "class": "onload-animation",
+        "animationDelay": 50
+      },
+      {
+        "type": "categories",
+        "enable": true,
+        "order": 3,
+        "position": "sticky",
+        "sidebar": "left",
+        "class": "onload-animation",
+        "animationDelay": 150,
+        "responsive": {
+          "collapseThreshold": 5
+        }
+      },
+      {
+        "type": "tags",
+        "enable": true,
+        "order": 5,
+        "position": "top",
+        "sidebar": "left",
+        "class": "onload-animation",
+        "animationDelay": 250,
+        "responsive": {
+          "collapseThreshold": 20
+        }
+      },
+      {
+        "type": "site-stats",
+        "enable": true,
+        "order": 5,
+        "position": "top",
+        "sidebar": "right",
+        "class": "onload-animation",
+        "animationDelay": 200
+      },
+      {
+        "type": "calendar",
+        "enable": true,
+        "order": 6,
+        "position": "top",
+        "sidebar": "right",
+        "class": "onload-animation",
+        "animationDelay": 250
+      }
+    ],
+    "defaultAnimation": {
+      "enable": true,
+      "baseDelay": 0,
+      "increment": 50
+    },
+    "responsive": {
+      "breakpoints": {
+        "mobile": 768,
+        "tablet": 1280,
+        "desktop": 1280
+      },
+      "layout": {
+        "mobile": "sidebar",
+        "tablet": "sidebar",
+        "desktop": "sidebar"
+      }
+    }
+  },
+  "sakuraConfig": {
+    "enable": true,
+    "sakuraNum": 21,
+    "limitTimes": -1,
+    "size": {
+      "min": 0.5,
+      "max": 1.1
+    },
+    "opacity": {
+      "min": 0.3,
+      "max": 0.9
+    },
+    "speed": {
+      "horizontal": {
+        "min": -1.7,
+        "max": -1.2
+      },
+      "vertical": {
+        "min": 1.5,
+        "max": 2.2
+      },
+      "rotation": 0.03,
+      "fadeSpeed": 0.03
+    },
+    "zIndex": 100
+  },
+  "pioConfig": {
+    "enable": true,
+    "models": [
+      "/pio/models/pio/model.json"
+    ],
+    "position": "left",
+    "width": 280,
+    "height": 250,
+    "mode": "draggable",
+    "hiddenOnMobile": true,
+    "dialog": {
+      "welcome": "Welcome to Mizuki Website!",
+      "touch": [
+        "What are you doing?",
+        "Stop touching me!",
+        "HENTAI!",
+        "Don't bully me like that!"
+      ],
+      "home": "Click here to go back to homepage!",
+      "skin": [
+        "Want to see my new outfit?",
+        "The new outfit looks great~"
+      ],
+      "close": "QWQ See you next time~",
+      "link": "https://github.com/Asuka-20011204"
+    }
+  }
+}
