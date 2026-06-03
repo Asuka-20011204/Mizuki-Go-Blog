@@ -304,7 +304,10 @@ import SettingsView from "../../components/admin/SettingsView.astro"; // 新增�
             'Authorization': `Bearer ${token}`
         };
         
-        const response = await fetch(url, { ...options, headers });
+        // 适配 astro trailingSlash: 'always'，确保 API 请求不会被 Astro 拦截
+        const finalUrl = url.includes('?') ? url : (url.endsWith('/') ? url : url + '/');
+        const response = await fetch(finalUrl, { ...options, headers });
+
         
         // 如果后端返回 401，说明 Token 失效了，直接踢回登录页
         if (response.status === 401) {

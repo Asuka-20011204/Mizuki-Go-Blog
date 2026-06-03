@@ -101,13 +101,13 @@ const bgImage = "/images/login-bg.webp";
     const account = (document.getElementById('account') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span>验证中...</span>`;
-    try {
-      const response = await fetch('http://localhost:8080/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account, password })
-      });
+     submitBtn.innerHTML = `<span>验证中...</span>`;
+      try {
+        const response = await fetch('/api/login/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, password })
+        });
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem('mizuki_token', data.token);

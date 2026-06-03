@@ -1,0 +1,93 @@
+# =====================
+# IDE & Editor
+# =====================
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+\#*\#
+.#*
+
+# =====================
+# OS generated files
+# =====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# =====================
+# Environment & Secrets
+# =====================
+.env
+.env.*
+!.env.example
+backend/config.yaml
+
+# =====================
+# Database
+# =====================
+*.session.sql
+
+# =====================
+# Go (Backend)
+# =====================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+backend/tmp/
+backend/bin/
+vendor/
+
+# =====================
+# Vercel
+# =====================
+.vercel
+
+# =====================
+# Logs
+# =====================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =====================
+# Backup & Temp
+# =====================
+*.bak
+*.backup
+*.tmp
+*.temp
+*_backup/
+tmp/
+temp/
+
+# =====================
+# Archive (large files)
+# =====================
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# =====================
+# Lock files (generated)
+# =====================
+package-lock.json
+yarn.lock
+bun.lockb

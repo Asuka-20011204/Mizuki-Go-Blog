@@ -9,7 +9,9 @@ async function authFetch(url: string, options: RequestInit = {}) {
         ...options.headers,
         'Authorization': `Bearer ${token}`
     };
-    const response = await fetch(url, { ...options, headers });
+    // 适配 astro trailingSlash: 'always'，确保 API 请求不会被 Astro 拦截
+    const finalUrl = url.includes('?') ? url : (url.endsWith('/') ? url : url + '/');
+    const response = await fetch(finalUrl, { ...options, headers });
     if (response.status === 401) {
         localStorage.removeItem('mizuki_token');
         window.location.href = '/admin/login/';
@@ -19,10 +21,27 @@ async function authFetch(url: string, options: RequestInit = {}) {
 }
 
 // --- 全局函数挂载（供 HTML onclick 使用）---
+// --- 用户管理全局函数 ---
+window.deleteAdminUser = async (id: number, username: string) => {
+    if (!confirm(`确定要删除管理员 [${username}] 吗？`)) return;
+    try {
+        const res = await authFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            refreshUserList();
+        } else {
+            const err = await res.json();
+            alert("删除失败：" + (err.error || "未知错误"));
+        }
+    } catch (e) {
+        alert("请求失败");
+    }
+};
+
+
 window.handleDelete = async (slug: string) => {
     if (!confirm(`确定要彻底删除文章 [${slug}] 吗？\n这将同时删除数据库记录和磁盘文件！`)) return;
     try {
-        const res = await authFetch(`http://localhost:8080/api/admin/posts/${slug}`, { method: 'DELETE' });
+        const res = await authFetch(`/api/admin/posts/${slug}`, { method: 'DELETE' });
         if (res.ok) {
             // 1. 立即从 DOM 中移除该文章行
             const postRow = document.querySelector(`tr[data-post-slug="${slug}"]`);
@@ -45,7 +64,7 @@ window.handleDelete = async (slug: string) => {
 window.deleteDiary = async (id: number) => {
     if (!confirm("确定删除这条日记吗？")) return;
     try {
-        const res = await authFetch(`http://localhost:8080/api/admin/diaries/${id}`, { method: 'DELETE' });
+        const res = await authFetch(`/api/admin/diaries/${id}`, { method: 'DELETE' });
         if (res.ok) refreshDiaryList();
     } catch (e) {
         alert("删除失败");
@@ -55,7 +74,7 @@ window.deleteDiary = async (id: number) => {
 window.deleteAlbum = async (id: string) => {
     if (!confirm(`确定要物理删除相册 [${id}] 吗？此操作不可恢复！`)) return;
     try {
-        const res = await authFetch(`http://localhost:8080/api/admin/albums/${id}`, { method: 'DELETE' });
+        const res = await authFetch(`/api/admin/albums/${id}`, { method: 'DELETE' });
         if (res.ok) refreshAlbumList();
     } catch (e) { alert("删除失败"); }
 };
@@ -72,7 +91,7 @@ window.managePhotos = (albumID: string) => {
 window.openPhotoManager = window.managePhotos; // 别名
 
 window.setAsCover = async (albumID: string, filename: string) => {
-    const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/set-cover`, {
+    const res = await authFetch(`/api/admin/albums/${albumID}/set-cover`, {
         method: 'POST',
         body: JSON.stringify({ filename })
     });
@@ -84,7 +103,7 @@ window.setAsCover = async (albumID: string, filename: string) => {
 
 window.deletePhoto = async (albumID: string, filename: string) => {
     if (!confirm(`确定删除图片 ${filename} 吗？`)) return;
-    const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/files/${filename}`, {
+    const res = await authFetch(`/api/admin/albums/${albumID}/files/${filename}`, {
         method: 'DELETE'
     });
     if (res.ok) refreshPhotoGrid(albumID);
@@ -98,7 +117,7 @@ async function refreshPostList() {
     const tableBody = document.getElementById('posts-list-table');
     if (!tableBody) return;
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/posts');
+        const res = await authFetch('/api/admin/posts');
         if (res.status === 401) {
             alert("登录已过期，请重新登录");
             window.location.href = '/admin/login/';
@@ -135,7 +154,7 @@ async function refreshDiaryList() {
     const diaryList = document.getElementById('diary-list-container');
     if (!diaryList) return;
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/diaries');
+        const res = await authFetch('/api/admin/diaries');
         const diaries = await res.json();
         diaryList.innerHTML = diaries.map((item: any) => `
             <div class="bg-white dark:bg-[#25262b] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
@@ -159,7 +178,7 @@ async function refreshAlbumList() {
     const listContainer = document.getElementById('albums-list');
     if (!listContainer) return;
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/albums');
+        const res = await authFetch('/api/admin/albums');
         const albums = await res.json();
         listContainer.innerHTML = albums.map((album: any) => `
             <div class="bg-white dark:bg-[#25262b] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden group">
@@ -192,7 +211,7 @@ async function refreshPhotoGrid(albumID: string) {
     const grid = document.getElementById('mgr-photos-grid');
     if (!grid) return;
     try {
-        const res = await authFetch(`http://localhost:8080/api/admin/albums/${albumID}/files`);
+        const res = await authFetch(`/api/admin/albums/${albumID}/files`);
         if (res.ok) {
             const files = await res.json();
             if (files.length === 0) {
@@ -221,7 +240,7 @@ async function refreshPhotoGrid(albumID: string) {
 
 async function refreshStats() {
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/stats');
+        const res = await authFetch('/api/admin/stats');
         const data = await res.json();
         const statPosts = document.getElementById('stat-posts');
         const statCategories = document.getElementById('stat-categories');
@@ -261,7 +280,7 @@ async function triggerRebuild() {
     rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
 
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/rebuild', { method: 'POST' });
+        const res = await authFetch('/api/admin/rebuild', { method: 'POST' });
         if (res.ok) {
             alert("项目重构成功！新静态内容已同步。");
             // 可选：刷新页面以确保所有缓存都更新
@@ -288,6 +307,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // --- 移动端侧边栏 ---
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuToggle = document.getElementById('menu-toggle-btn');
+    const sidebarClose = document.getElementById('sidebar-close-btn');
+
+    function openSidebar() {
+        sidebar?.classList.remove('-translate-x-full');
+        sidebar?.classList.add('translate-x-0');
+        overlay?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar?.classList.add('-translate-x-full');
+        sidebar?.classList.remove('translate-x-0');
+        overlay?.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    menuToggle?.addEventListener('click', openSidebar);
+    sidebarClose?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar?.classList.contains('translate-x-0')) {
+            closeSidebar();
+        }
+    });
+
     // 侧边栏 Tab 切换
     const navItems = document.querySelectorAll('.nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -311,6 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.loadConfig();
                 }
             }
+            if (tabId === 'users') refreshUserList();
+            // 移动端点击导航后自动关闭侧边栏
+            closeSidebar();
         });
     });
 
@@ -337,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mood = (document.getElementById('diary-mood') as HTMLInputElement).value;
         if (!content) return alert("内容不能为空");
         try {
-            const res = await authFetch('http://localhost:8080/api/admin/diaries', {
+            const res = await authFetch('/api/admin/diaries', {
                 method: 'POST',
                 body: JSON.stringify({ content, location, mood, images: diaryUploadedImages })
             });
@@ -362,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('file', file);
             formData.append('slug', 'diary');
             try {
-                const res = await authFetch('http://localhost:8080/api/admin/upload', { method: 'POST', body: formData });
+                const res = await authFetch('/api/admin/upload', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.code === 0) {
                     const url = Object.values(data.data.succMap)[0] as string;
@@ -401,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('file', f);
             formData.append('slug', `albums/${albumID}`);
             try {
-                const res = await authFetch('http://localhost:8080/api/admin/upload', { method: 'POST', body: formData });
+                const res = await authFetch('/api/admin/upload', { method: 'POST', body: formData });
                 if (res.ok) console.log(`文件 ${f.name} 上传成功`);
             } catch (err) {
                 console.error("上传失败", err);
@@ -438,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         try {
-            const res = await authFetch('http://localhost:8080/api/admin/albums', { method: 'POST', body: JSON.stringify(payload) });
+            const res = await authFetch('/api/admin/albums', { method: 'POST', body: JSON.stringify(payload) });
             if (res.ok) {
                 alert("相册配置已生成！");
                 (albumDialog as any).close();
@@ -455,6 +506,90 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('save-config-btn');
     saveBtn?.addEventListener('click', saveConfig);
 
+        // ----- 用户管理对话框 -----
+    const addAdminBtn = document.getElementById('add-admin-btn');
+    const addAdminDialog = document.getElementById('add-admin-dialog');
+    const cancelAddAdmin = document.getElementById('cancel-add-admin');
+    const confirmAddAdmin = document.getElementById('confirm-add-admin');
+    const changePwdBtn = document.getElementById('change-pwd-btn');
+    const changePwdDialog = document.getElementById('change-pwd-dialog');
+    const cancelChangePwd = document.getElementById('cancel-change-pwd');
+    const confirmChangePwd = document.getElementById('confirm-change-pwd');
+
+    addAdminBtn?.addEventListener('click', () => {
+        (addAdminDialog as any)?.showModal();
+    });
+    cancelAddAdmin?.addEventListener('click', () => {
+        (addAdminDialog as any)?.close();
+    });
+    confirmAddAdmin?.addEventListener('click', async () => {
+        const username = (document.getElementById('new-admin-username') as HTMLInputElement).value.trim();
+        const password = (document.getElementById('new-admin-password') as HTMLInputElement).value;
+        const qq = (document.getElementById('new-admin-qq') as HTMLInputElement).value.trim();
+        const phone = (document.getElementById('new-admin-phone') as HTMLInputElement).value.trim();
+
+        if (!username || !password) return alert("用户名和密码不能为空");
+        if (password.length < 6) return alert("密码至少6位");
+
+        try {
+            const res = await authFetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, qq, phone })
+            });
+            if (res.ok) {
+                alert("管理员添加成功！");
+                (addAdminDialog as any).close();
+                // 清空表单
+                ['new-admin-username', 'new-admin-password', 'new-admin-qq', 'new-admin-phone'].forEach(id => {
+                    (document.getElementById(id) as HTMLInputElement).value = '';
+                });
+                refreshUserList();
+            } else {
+                const err = await res.json();
+                alert("添加失败: " + (err.error || "未知错误"));
+            }
+        } catch (e) {
+            alert("网络错误");
+        }
+    });
+
+    changePwdBtn?.addEventListener('click', () => {
+        (changePwdDialog as any)?.showModal();
+    });
+    cancelChangePwd?.addEventListener('click', () => {
+        (changePwdDialog as any)?.close();
+    });
+    confirmChangePwd?.addEventListener('click', async () => {
+        const oldPassword = (document.getElementById('old-password') as HTMLInputElement).value;
+        const newPassword = (document.getElementById('new-password') as HTMLInputElement).value;
+
+        if (!oldPassword || !newPassword) return alert("请填写旧密码和新密码");
+        if (newPassword.length < 6) return alert("新密码至少6位");
+        if (oldPassword === newPassword) return alert("新密码不能与旧密码相同");
+
+        try {
+            const res = await authFetch('/api/admin/users/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+            });
+            if (res.ok) {
+                alert("密码修改成功！");
+                (changePwdDialog as any).close();
+                ['old-password', 'new-password'].forEach(id => {
+                    (document.getElementById(id) as HTMLInputElement).value = '';
+                });
+            } else {
+                const err = await res.json();
+                alert("修改失败: " + (err.error || "未知错误"));
+            }
+        } catch (e) {
+            alert("网络错误");
+        }
+    });
+
+
     // 重构按钮
     const rebuildBtn = document.getElementById('rebuild-btn') as HTMLButtonElement;
     rebuildBtn?.addEventListener('click', async () => {
@@ -463,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rebuildBtn.innerHTML = `<span>构建中...</span>`;
         rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
         try {
-            const res = await authFetch('http://localhost:8080/api/admin/rebuild', { method: 'POST' });
+            const res = await authFetch('/api/admin/rebuild', { method: 'POST' });
             if (res.ok) alert("项目重构成功！新静态内容已同步。");
             else {
                 const err = await res.json();
@@ -498,6 +633,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('albums-view')?.classList.remove('hidden');
     } else if (activeTab === 'settings') {
         loadConfig();
+    } else if (activeTab === 'users') {
+        refreshUserList();
+        document.getElementById('users-view')?.classList.remove('hidden');
     } else {
         // 默认激活 dashboard 但未选中时，可手动刷新 stats
         const dashboardView = document.getElementById('dashboard-view');
@@ -529,7 +667,7 @@ let currentConfig: FullConfig | null = null;
 
 async function loadConfig() {
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/config');
+        const res = await authFetch('/api/admin/config');
         if (!res.ok) throw new Error('加载配置失败');
         const config = await res.json() as FullConfig;
         currentConfig = config;
@@ -979,21 +1117,21 @@ function collectConfigData(): FullConfig {
         customHtml: getValue('cfg-footer-html'),
     };
     // 在 return 语句中合并
-return {
-    siteConfig: { ...currentConfig?.siteConfig, ...s },
-    fullscreenWallpaperConfig: { ...currentConfig?.fullscreenWallpaperConfig, ...fw },
-    navBarConfig: currentConfig?.navBarConfig || {},
-    profileConfig: { ...currentConfig?.profileConfig, ...profile },
-    licenseConfig: { ...currentConfig?.licenseConfig, ...license },
-    expressiveCodeConfig: { ...currentConfig?.expressiveCodeConfig, ...code },
-    commentConfig: { ...currentConfig?.commentConfig, ...comment },
-    announcementConfig: { ...currentConfig?.announcementConfig, ...announcement },
-    musicPlayerConfig: { ...currentConfig?.musicPlayerConfig, ...music },
-    footerConfig: { ...currentConfig?.footerConfig, ...footer },
-    sidebarLayoutConfig: { ...currentConfig?.sidebarLayoutConfig, ...sidebar },
-    sakuraConfig: { ...currentConfig?.sakuraConfig, ...sakura },
-    pioConfig: { ...currentConfig?.pioConfig, ...pio },
-};
+    return {
+        siteConfig: { ...currentConfig?.siteConfig, ...s },
+        fullscreenWallpaperConfig: { ...currentConfig?.fullscreenWallpaperConfig, ...fw },
+        navBarConfig: currentConfig?.navBarConfig || {},
+        profileConfig: { ...currentConfig?.profileConfig, ...profile },
+        licenseConfig: { ...currentConfig?.licenseConfig, ...license },
+        expressiveCodeConfig: { ...currentConfig?.expressiveCodeConfig, ...code },
+        commentConfig: { ...currentConfig?.commentConfig, ...comment },
+        announcementConfig: { ...currentConfig?.announcementConfig, ...announcement },
+        musicPlayerConfig: { ...currentConfig?.musicPlayerConfig, ...music },
+        footerConfig: { ...currentConfig?.footerConfig, ...footer },
+        sidebarLayoutConfig: { ...currentConfig?.sidebarLayoutConfig, ...sidebar },
+        sakuraConfig: { ...currentConfig?.sakuraConfig, ...sakura },
+        pioConfig: { ...currentConfig?.pioConfig, ...pio },
+    };
 }
 
 async function saveConfig() {
@@ -1004,7 +1142,7 @@ async function saveConfig() {
     const payload = collectConfigData();
     const statusEl = document.getElementById('config-save-status');
     try {
-        const res = await authFetch('http://localhost:8080/api/admin/config', {
+        const res = await authFetch('/api/admin/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1056,3 +1194,63 @@ function getTextareaLines(id: string): string[] {
 // 挂载到 window
 window.loadConfig = loadConfig;
 window.saveConfig = saveConfig;
+
+// ---------- 用户管理 ----------
+
+function getCurrentUserRole(): string {
+    const token = localStorage.getItem('mizuki_token');
+    if (!token) return '';
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.role || '';
+    } catch {
+        return '';
+    }
+}
+
+async function refreshUserList() {
+    const tbody = document.getElementById('users-list-body');
+    if (!tbody) return;
+    try {
+        const res = await authFetch('/api/admin/users');
+        const users = await res.json();
+        const currentRole = getCurrentUserRole();
+        const isOwner = currentRole === 'owner';
+
+        // 根据角色显示/隐藏添加管理员按钮
+        const addBtn = document.getElementById('add-admin-btn');
+        if (addBtn) addBtn.style.display = isOwner ? 'flex' : 'none';
+
+        tbody.innerHTML = users.map((u: any) => `
+            <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                <td class="p-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.avatar || '/images/logo.png'}" class="w-9 h-9 rounded-full object-cover border dark:border-gray-700" onerror="this.style.display='none'" />
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-gray-100">${u.username}</p>
+                            <p class="text-xs text-gray-400 md:hidden">${u.role === 'owner' ? '所有者' : '管理员'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-4 hidden md:table-cell">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${u.role === 'owner' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}">
+                        ${u.role === 'owner' ? '所有者' : '管理员'}
+                    </span>
+                </td>
+                <td class="p-4 hidden md:table-cell text-sm text-gray-500">
+                    ${u.qq ? `<span class="block">QQ: ${u.qq}</span>` : ''}
+                    ${u.phone ? `<span class="block">手机号： ${u.phone}</span>` : ''}
+                    ${!u.qq && !u.phone ? '<span class="text-gray-300">未填写</span>' : ''}
+                </td>
+                <td class="p-4 text-right">
+                    ${isOwner && u.role !== 'owner' ? `
+                        <button onclick="window.deleteAdminUser(${u.id}, '${u.username}')"
+                            class="text-red-500 hover:text-red-600 font-medium text-sm px-2">删除</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-red-400">加载失败，请检查后端服务</td></tr>';
+    }
+}

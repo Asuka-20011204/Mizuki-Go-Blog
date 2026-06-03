@@ -8,6 +8,8 @@ import (
 	"my-blog-backend/middleware"
 	"my-blog-backend/models"
 	"my-blog-backend/service"
+	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -37,6 +39,8 @@ func main() {
 	dashboardService := &service.DashboardService{DB: db}
 	albumService := &service.AlbumService{}
 	configService := &service.ConfigService{}
+	userService := &service.UserService{DB: db}
+
 	// 第二步：将 service 注入 Controller
 	postCtrl := &controller.PostController{PostService: postService}
 	authCtrl := &controller.AuthController{AuthService: authService}
@@ -45,9 +49,10 @@ func main() {
 	dashboardCtrl := &controller.DashboardController{DashboardService: dashboardService}
 	albumCtrl := &controller.AlbumController{AlbumService: albumService}
 	configCtrl := &controller.ConfigController{ConfigService: configService}
-
+	userCtrl := &controller.UserController{UserService: userService}
 	// 3. 设置 Gin 路由
 	r := gin.Default()
+	r.RedirectTrailingSlash = false
 
 	// 配置 CORS 跨域
 	r.Use(corsMiddleware())
@@ -76,7 +81,22 @@ func main() {
 		admin.DELETE("/albums/:id/files/:filename", albumCtrl.DeletePhoto)
 		admin.GET("/config", configCtrl.GetConfig)
 		admin.POST("/config", configCtrl.UpdateConfig)
+		admin.GET("/users", userCtrl.ListAdmins)
+		admin.POST("/users", userCtrl.AddAdmin)
+		admin.DELETE("/users/:id", userCtrl.DeleteAdmin)
+		admin.PUT("/users/password", userCtrl.ChangePassword)
+
 	}
+	// 处理带尾斜杠的请求：匹配不到路由时，去掉斜杠重试
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if len(path) > 1 && strings.HasSuffix(path, "/") {
+			c.Request.URL.Path = path[:len(path)-1]
+			r.HandleContext(c)
+			return
+		}
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+	})
 	r.Static("/preview-cache", "../frontend/public/preview-cache")
 
 	// 4. 启动服务器

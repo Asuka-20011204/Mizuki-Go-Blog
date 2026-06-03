@@ -3,16 +3,22 @@ import { Icon } from 'astro-icon/components';
 ---
 
 <!-- src/components/admin/Sidebar.astro -->
-<aside class="w-64 bg-white dark:bg-[#25262b] shadow-xl z-30 hidden md:flex flex-col">
-    <div class="p-6 border-b border-gray-100 dark:border-gray-800">
+<!-- 移动端遮罩 -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden" aria-hidden="true"></div>
+
+<aside id="admin-sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#25262b] shadow-xl flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+    <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center text-white">
                 <Icon name="material-symbols:admin-panel-settings" class="text-xl" />
             </div>
             <span class="font-bold text-xl tracking-tight">管理后台</span>
         </div>
+        <button id="sidebar-close-btn" class="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Icon name="material-symbols:close" class="text-2xl" />
+        </button>
     </div>
-    
+
     <nav class="flex-1 overflow-y-auto p-4 space-y-2">
         <div class="text-xs font-semibold text-gray-400 uppercase px-3 mb-2">内容管理</div>
         <button class="nav-item active" data-tab="dashboard">
@@ -32,8 +38,8 @@ import { Icon } from 'astro-icon/components';
         <button class="nav-item" data-tab="settings">
             <Icon name="material-symbols:settings-outline" /> 站点配置 (Config)
         </button>
-        <button class="nav-item" data-tab="nav">
-            <Icon name="material-symbols:menu-open" /> 导航菜单定制
+                <button class="nav-item" data-tab="users">
+            <Icon name="material-symbols:group-outline" /> 管理员用户
         </button>
     </nav>
 

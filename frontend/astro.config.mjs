@@ -182,10 +182,30 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		server: {
+			proxy: {
+				'/api': 'http://localhost:8080',
+				'/preview-cache': 'http://localhost:8080',
+			},
+		},
+		plugins: [
+			{
+				name: 'api-proxy-patch',
+				configureServer(server) {
+					// 在 Astro 路由之前再次确保代理生效
+					server.middlewares.use((req, res, next) => {
+						if (req.url?.startsWith('/api/') || req.url?.startsWith('/preview-cache/')) {
+							// 移除 trailingSlash 干扰
+							req.url = req.url.replace(/\/$/, '');
+						}
+						next();
+					});
+				},
+			},
+		],
 		build: {
 			rollupOptions: {
 				onwarn(warning, warn) {
-					// temporarily suppress this warning
 					if (
 						warning.message.includes("is dynamically imported by") &&
 						warning.message.includes("but also statically imported by")
@@ -197,4 +217,5 @@ export default defineConfig({
 			},
 		},
 	},
+
 });

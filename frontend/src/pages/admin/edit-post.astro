@@ -3,8 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 ---
 
 <Layout title="编辑文章 - Mizuki Admin">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
-  
+  <link rel="stylesheet" href="/vditor/index.css" />
   <main class="max-w-[90rem] mx-auto p-4 md:p-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold flex items-center gap-2">
@@ -62,8 +61,8 @@ import Layout from '../../layouts/Layout.astro';
     </div>
   </main>
 
+ <script is:inline src="/vditor/index.min.js"></script>
   <script>
-  import Vditor from 'vditor';
   let vditor;
 
     // 封装认证请求
@@ -74,7 +73,9 @@ import Layout from '../../layouts/Layout.astro';
             'Authorization': `Bearer ${token}`
         };
         
-        const response = await fetch(url, { ...options, headers });
+        // 适配 astro trailingSlash: 'always'，确保 API 请求不会被 Astro 拦截
+        const finalUrl = url.includes('?') ? url : (url.endsWith('/') ? url : url + '/');
+        const response = await fetch(finalUrl, { ...options, headers });
         
         // 如果后端返回 401，说明 Token 失效了，直接踢回登录页
         if (response.status === 401) {
@@ -84,6 +85,22 @@ import Layout from '../../layouts/Layout.astro';
         }
         
         return response;
+    }
+
+    function validateSlug(slug) {
+      if (!slug) return false;
+      // 禁止包含 / \ .. 空格 等特殊字符
+      const dangerousPattern = /[\/\\]|\.\./;
+      if (dangerousPattern.test(slug)) {
+          alert("Slug 不能包含 '/'、'\\' 或 '..' 等危险字符");
+          return false;
+      }
+      // 可选：只允许字母、数字、短横线、下划线
+      if (!/^[a-zA-Z0-9_-]+$/.test(slug)) {
+          alert("Slug 只能包含字母、数字、短横线(-)和下划线(_)");
+          return false;
+      }
+      return true;
     }
 
   // 去除字符串开头的 frontmatter 块（如果存在），返回纯正文
@@ -180,7 +197,7 @@ import Layout from '../../layouts/Layout.astro';
   // ----- 加载文章数据 -----
   async function loadPostData() {
     try {
-      const res = await authFetch(`http://localhost:8080/api/admin/posts/${slug}`);
+      const res = await authFetch(`/api/admin/posts/${slug}`);
       const post = await res.json();
       console.log("Original data:", post);
 
@@ -236,6 +253,8 @@ import Layout from '../../layouts/Layout.astro';
 
   // ----- 保存修改 -----
   document.getElementById('update-btn')?.addEventListener('click', async () => {
+  const slug = document.getElementById('post-slug').value;
+    if (!validateSlug(slug)) return;   // 添加校验
   const title = document.getElementById('post-title').value;
   const category = document.getElementById('post-category').value;
   const tagsRaw = document.getElementById('post-tags').value;
@@ -264,7 +283,7 @@ import Layout from '../../layouts/Layout.astro';
     };
 
   try {
-    const res = await authFetch('http://localhost:8080/api/admin/posts', {
+    const res = await authFetch('/api/admin/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
