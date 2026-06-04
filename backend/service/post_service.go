@@ -3,10 +3,10 @@ package service
 import (
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"my-blog-backend/config"
 	"my-blog-backend/models"
+	"regexp"
 
 	"os"
 	"path/filepath"
@@ -71,7 +71,18 @@ draft: false
 	if err := os.MkdirAll(postDir, 0755); err != nil {
 		return fmt.Errorf("创建目录失败: %v", err)
 	}
-
+	// 把正文中引用的图片从 preview-cache 搬到文章目录
+	re := regexp.MustCompile(`/preview-cache/([^\s\)]+)`)
+	matches := re.FindAllStringSubmatch(req.Content, -1)
+	for _, m := range matches {
+		srcFile := filepath.Join(previewDir, m[1])
+		dstFile := filepath.Join(postDir, m[1])
+		if _, err := os.Stat(srcFile); err == nil {
+			s.copyFile(srcFile, dstFile)
+		}
+	}
+	// 图片搬完之后，把正文中的 /preview-cache/ 替换为 ./
+	cleanBody = strings.ReplaceAll(cleanBody, "/preview-cache/", "./")
 	savePath := filepath.Join(postDir, "index.md")
 	if err := os.WriteFile(savePath, []byte(fullContent), 0644); err != nil {
 		return fmt.Errorf("写入 MD 文件失败: %v", err)
@@ -130,16 +141,12 @@ func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader, 
 		savePath = filepath.Join(albumDir, newFileName)
 		returnURL = "/images/albums/" + albumID + "/" + newFileName
 	} else {
-		// 文章图片
-		postDir := filepath.Join(postsBaseDir, slug)
-		if err := os.MkdirAll(postDir, 0755); err != nil {
-			return "", err
-		}
+		// 文章图片：先只存预览目录，发布时才搬到文章目录
 		if err := os.MkdirAll(previewDir, 0755); err != nil {
 			return "", err
 		}
-		savePath = filepath.Join(postDir, newFileName)
-		returnURL = newFileName
+		savePath = filepath.Join(previewDir, newFileName)
+		returnURL = "/preview-cache/" + newFileName
 	}
 
 	// 保存原始文件
@@ -156,14 +163,6 @@ func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader, 
 	defer out.Close()
 	if _, err := io.Copy(out, src); err != nil {
 		return "", err
-	}
-
-	// 如果是文章图片，额外复制一份到预览目录
-	if !strings.HasPrefix(slug, "albums/") {
-		previewPath := filepath.Join(previewDir, newFileName)
-		if err := s.copyFile(savePath, previewPath); err != nil {
-			log.Printf("预览文件拷贝失败: %v", err)
-		}
 	}
 
 	return returnURL, nil

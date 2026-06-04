@@ -132,6 +132,24 @@ import Layout from '../../layouts/Layout.astro';
       }
       return true;
     }
+    // 每次进入新建页面时清空所有残留
+    window.addEventListener('pageshow', () => {
+      if (!new URLSearchParams(window.location.search).get('edit')) {
+        // 新建模式：强制清空
+        const fields = ['post-title', 'post-slug', 'post-category', 'post-tags', 'post-lang', 'post-image', 'post-desc'];
+          fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        document.getElementById('post-pinned').checked = false;
+        document.getElementById('post-lang').value = 'zh-CN';
+        // 延迟清除 Vditor，等它初始化完
+        setTimeout(() => {
+          if (window.vditor) window.vditor.setValue('');
+        }, 300);
+      }
+    });
+
     // 1. 初始化 Vditor
     const initVditor = () => {
       window.vditor = new Vditor('vditor', {
@@ -199,10 +217,10 @@ import Layout from '../../layouts/Layout.astro';
       }
     }
 
-    // 3. 发布并清空逻辑 (核心：不删除你的逻辑！)
+    // 3. 发布并清空逻辑
     document.getElementById('publish-btn').addEventListener('click', async () => {
       const rawContent = window.vditor.getValue();
-      const finalContent = rawContent.replaceAll('/preview-cache/', './');
+      const finalContent = rawContent;
       const slug = document.getElementById('post-slug').value;
       if (!validateSlug(slug)) return;   // 添加校验
 

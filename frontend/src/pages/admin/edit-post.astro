@@ -265,8 +265,6 @@ import Layout from '../../layouts/Layout.astro';
   const pinned = document.getElementById('post-pinned').checked;
 
   let markdownBody = vditor.getValue();
-  // 预览路径转相对路径
-  let bodyForStorage = markdownBody.replaceAll('/preview-cache/', './');
   // 去除正文中可能出现的任何 frontmatter（避免重复）
   bodyForStorage = stripFrontmatter(bodyForStorage);
 

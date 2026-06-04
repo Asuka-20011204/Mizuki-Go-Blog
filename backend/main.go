@@ -9,6 +9,8 @@ import (
 	"my-blog-backend/models"
 	"my-blog-backend/service"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -90,9 +92,43 @@ func main() {
 	// 处理带尾斜杠的请求：匹配不到路由时，去掉斜杠重试
 	r.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
+
+		// 1. 尾斜杠 -> 去斜杠重试
 		if len(path) > 1 && strings.HasSuffix(path, "/") {
 			c.Request.URL.Path = path[:len(path)-1]
 			r.HandleContext(c)
+			return
+		}
+
+		// 2. 尝试托管 frontend/dist 下的静态文件
+		staticRoot := filepath.Join("..", "frontend", "dist")
+		requestedPath := filepath.Join(staticRoot, filepath.Clean(path))
+		// 安全检查：确保不越出 staticRoot
+		if !strings.HasPrefix(requestedPath, staticRoot) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
+
+		// 打开文件/目录
+		info, err := os.Stat(requestedPath)
+		if err == nil {
+			if info.IsDir() {
+				// 目录 -> 尝试 index.html
+				indexPath := filepath.Join(requestedPath, "index.html")
+				if _, err := os.Stat(indexPath); err == nil {
+					c.File(indexPath)
+					return
+				}
+			} else {
+				c.File(requestedPath)
+				return
+			}
+		}
+
+		// 3. 都不匹配 -> 返回 404 页面或 JSON
+		notFoundPage := filepath.Join(staticRoot, "404.html")
+		if _, err := os.Stat(notFoundPage); err == nil {
+			c.File(notFoundPage)
 			return
 		}
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})

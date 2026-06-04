@@ -72,7 +72,7 @@ func (pc *PostController) HandleUpload(c *gin.Context) {
 		"data": gin.H{
 			"errFiles": []string{},
 			"succMap": map[string]string{
-				file.Filename: "/preview-cache/" + fileName,
+				file.Filename: fileName,
 			},
 		},
 	})
