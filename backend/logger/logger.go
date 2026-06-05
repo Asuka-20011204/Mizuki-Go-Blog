@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -83,7 +84,8 @@ func Fatal(msg string, args ...any) {
 
 // ---------- Gin 中间件 ----------
 
-// GinLogger 返回一个 Gin 中间件，以结构化格式记录每个 HTTP 请求
+// GinLogger 返回一个 Gin 中间件，记录 API 请求和所有异常请求
+// 成功的静态文件请求不记录，避免日志刷屏
 func GinLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -108,15 +110,23 @@ func GinLogger() gin.HandlerFunc {
 			attrs = append(attrs, "query", query)
 		}
 
-		switch {
-		case len(c.Errors) > 0:
+		// 错误请求：无条件记录
+		if len(c.Errors) > 0 {
 			attrs = append(attrs, "errors", c.Errors.String())
 			log.Error("HTTP", attrs...)
-		case status >= 500:
+			return
+		}
+		if status >= 500 {
 			log.Error("HTTP", attrs...)
-		case status >= 400:
+			return
+		}
+		if status >= 400 {
 			log.Warn("HTTP", attrs...)
-		default:
+			return
+		}
+
+		// 成功请求：只记录 API 路由，跳过静态文件
+		if strings.HasPrefix(path, "/api/") {
 			log.Info("HTTP", attrs...)
 		}
 	}
