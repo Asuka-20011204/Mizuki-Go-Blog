@@ -19,6 +19,15 @@ func InitDatabase(db *gorm.DB) {
 		logger.Info("正在初始化默认所有者账号...")
 
 		conf := config.GlobalConfig.InitData
+
+		// 安全检查：密码不能为空且不少于 8 位
+		if conf.OwnerPassword == "" {
+			logger.Fatal("所有者初始化密码为空，请通过环境变量 OWNER_PASSWORD 设置至少 8 位密码")
+		}
+		if len(conf.OwnerPassword) < 8 {
+			logger.Fatal("所有者初始化密码太短", "min_length", 8)
+		}
+
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(conf.OwnerPassword), bcrypt.DefaultCost)
 		// 自动根据 QQ 号生成初始头像地址
 		defaultAvatar := ""

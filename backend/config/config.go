@@ -52,7 +52,7 @@ type InitDataConfig struct {
 
 var GlobalConfig *Config
 
-// LoadConfig 从指定路径加载配置
+// LoadConfig 从指定路径加载配置，环境变量优先覆盖敏感字段
 func LoadConfig(path string) {
 	conf := &Config{}
 	data, err := os.ReadFile(path)
@@ -63,6 +63,17 @@ func LoadConfig(path string) {
 	err = yaml.Unmarshal(data, conf)
 	if err != nil {
 		log.Fatalf("解析配置文件失败: %v", err)
+	}
+
+	// 环境变量覆盖（敏感信息不从配置文件读取）
+	if v := os.Getenv("DB_DSN"); v != "" {
+		conf.Database.Dsn = v
+	}
+	if v := os.Getenv("JWT_SECRET"); v != "" {
+		conf.JWT.Secret = v
+	}
+	if v := os.Getenv("OWNER_PASSWORD"); v != "" {
+		conf.InitData.OwnerPassword = v
 	}
 
 	GlobalConfig = conf

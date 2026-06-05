@@ -1,12 +1,14 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"my-blog-backend/logger"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 type SystemService struct{}
@@ -21,18 +23,24 @@ func (s *SystemService) RebuildProject() error {
 	_ = os.RemoveAll(cacheDir)
 	_ = os.RemoveAll(distDir)
 
-	// 3. 跨平台执行 pnpm build
+	// 3. 跨平台执行 pnpm build（5 分钟超时）
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", "pnpm build")
+		cmd = exec.CommandContext(ctx, "cmd", "/c", "pnpm build")
 	} else {
-		cmd = exec.Command("sh", "-c", "pnpm build")
+		cmd = exec.CommandContext(ctx, "sh", "-c", "pnpm build")
 	}
 
 	cmd.Dir = frontendPath
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("构建失败: %v\n输出: %s", err, string(output))
+		if ctx.Err() == context.DeadlineExceeded {
+			return fmt.Errorf("构建超时（超过5分钟），请检查前端项目")
+		}
+		return fmt.Errorf("构建失败")
 	}
 
 	logger.Info("前端重构成功", "output_size", len(output))

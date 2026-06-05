@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -21,6 +22,9 @@ import (
 func main() {
 	// 1. 加载配置
 	config.LoadConfig("config.yaml")
+
+	// 1.2. 设置 Gin 运行模式
+	gin.SetMode(config.GlobalConfig.Server.Mode)
 
 	// 1.5. 初始化日志
 	if err := logger.Init(config.GlobalConfig.Log.Dir, config.GlobalConfig.Log.Level); err != nil {
@@ -61,15 +65,18 @@ func main() {
 	// 3. 设置 Gin 路由
 	r := gin.New()
 	r.RedirectTrailingSlash = false
+	r.MaxMultipartMemory = 10 << 20 // 上传文件最大 10MB
 
 	// 自定义 Gin 中间件：Logger（输出到文件） + Recovery
 	r.Use(logger.GinLogger(), gin.Recovery())
 
+	// 安全响应头（在 CORS 之前）
+	r.Use(securityHeaders())
 	// 配置 CORS 跨域
 	r.Use(corsMiddleware())
 
-	// 业务接口组
-	r.POST("/api/login", authCtrl.Login)
+	// 业务接口组（登录限流：每分钟最多 5 次尝试）
+	r.POST("/api/login", middleware.RateLimit(5, time.Minute), authCtrl.Login)
 	// 管理接口组
 	admin := r.Group("/api/admin")
 	admin.Use(middleware.JWTAuth())
@@ -153,18 +160,38 @@ func main() {
 	}
 }
 
-// corsMiddleware 保持不变
+// corsMiddleware 限制跨域来源，支持环境变量 CORS_ORIGIN 配置
 func corsMiddleware() gin.HandlerFunc {
+	allowOrigin := os.Getenv("CORS_ORIGIN")
+	if allowOrigin == "" {
+		allowOrigin = "http://localhost:4321" // 开发默认值
+	}
+
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.GetHeader("Origin")
+		// 匹配允许的来源
+		if origin == allowOrigin || allowOrigin == "*" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, Origin, Cache-Control")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
+		c.Next()
+	}
+}
+
+// securityHeaders 添加基本安全响应头
+func securityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+		c.Writer.Header().Set("X-Frame-Options", "DENY")
+		c.Writer.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Writer.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 		c.Next()
 	}
 }

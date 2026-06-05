@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"my-blog-backend/logger"
 	"my-blog-backend/models"
 	"my-blog-backend/service"
 	"net/http"
@@ -16,7 +17,8 @@ type DiaryController struct {
 func (dc *DiaryController) List(c *gin.Context) {
 	data, err := dc.DiaryService.GetDiaries()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		logger.Error("获取日记列表失败", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取日记失败"})
 		return
 	}
 	c.JSON(http.StatusOK, data)
@@ -29,7 +31,8 @@ func (dc *DiaryController) Create(c *gin.Context) {
 		return
 	}
 	if err := dc.DiaryService.SaveDiary(req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		logger.Error("保存日记失败", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存日记失败"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "日记发布成功"})
@@ -45,7 +48,8 @@ func (dc *DiaryController) Delete(c *gin.Context) {
 	}
 
 	if err := dc.DiaryService.DeleteDiary(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		logger.Error("删除日记失败", "error", err, "id", id)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除日记失败"})
 		return
 	}
 

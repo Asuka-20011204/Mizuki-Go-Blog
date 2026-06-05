@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"my-blog-backend/logger"
 	"my-blog-backend/models"
 	"my-blog-backend/service"
+	"my-blog-backend/validator"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,13 +20,19 @@ type PostController struct {
 func (pc *PostController) HandleCreatePost(c *gin.Context) {
 	var req models.PostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "请求格式错误: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求格式错误"})
 		return
 	}
 
-	// 严格 MVC：调用 Service 层处理复杂的“写文件+存数据库”逻辑
+	if !validator.SafeSlug(req.Slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug 包含非法字符"})
+		return
+	}
+
+	// 严格 MVC：调用 Service 层处理复杂的"写文件+存数据库"逻辑
 	if err := pc.PostService.ProcessPostPublish(req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "发布失败: " + err.Error()})
+		logger.Error("文章发布失败", "error", err, "slug", req.Slug)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "发布失败"})
 		return
 	}
 
@@ -42,6 +51,21 @@ func (pc *PostController) HandleUpload(c *gin.Context) {
 	if slug == "" {
 		slug = "preview-cache"
 	}
+
+	// 校验 slug 合法性
+	if slug != "preview-cache" && slug != "diary" && !strings.HasPrefix(slug, "albums/") && !validator.SafeSlug(slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Slug 包含非法字符", "code": 1})
+		return
+	}
+	// 校验 albums 路径
+	if strings.HasPrefix(slug, "albums/") {
+		albumID := strings.TrimPrefix(slug, "albums/")
+		if !validator.SafePath(albumID) {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "相册 ID 包含非法字符", "code": 1})
+			return
+		}
+	}
+
 	// 获取 is_cover 参数
 	isCover := c.PostForm("is_cover") == "true"
 
@@ -54,14 +78,25 @@ func (pc *PostController) HandleUpload(c *gin.Context) {
 		return
 	}
 
+	// 文件大小限制 10MB
+	if file.Size > 10*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "文件大小不能超过 10MB", "code": 1})
+		return
+	}
+
+	// 只允许图片类型
+	contentType := file.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "image/") {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "只允许上传图片文件", "code": 1})
+		return
+	}
+
 	// 调用 Service
 
 	fileName, err := pc.PostService.SavePostResource(slug, file, isCover)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  err.Error(),
-			"code": 1,
-		})
+		logger.Error("文件上传失败", "error", err, "slug", slug)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "上传失败", "code": 1})
 		return
 	}
 
@@ -95,9 +130,14 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug 不能为空"})
 		return
 	}
+	if !validator.SafeSlug(slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug 包含非法字符"})
+		return
+	}
 
 	if err := pc.PostService.DeletePost(slug); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败: " + err.Error()})
+		logger.Error("文章删除失败", "error", err, "slug", slug)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败"})
 		return
 	}
 
@@ -107,6 +147,10 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 // GetPostDetail 获取单篇详情接口
 func (pc *PostController) GetPostDetail(c *gin.Context) {
 	slug := c.Param("slug")
+	if !validator.SafeSlug(slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug 包含非法字符"})
+		return
+	}
 	post, err := pc.PostService.GetPostBySlug(slug)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
