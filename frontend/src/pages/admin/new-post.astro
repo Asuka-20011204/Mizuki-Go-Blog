@@ -70,7 +70,10 @@ import Layout from '../../layouts/Layout.astro';
             </div>
             <div>
               <label class="block text-sm font-medium mb-1 opacity-60">封面图 URL</label>
-              <input type="text" id="post-image" placeholder="/images/cover.jpg" class="w-full px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+              <div class="flex gap-2">
+                <input type="text" id="post-image" placeholder="/images/cover.jpg" class="flex-1 px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+                <button type="button" onclick="window.openCoverPicker('post-image')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm whitespace-nowrap transition">相册选择</button>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1 opacity-60">语言</label>
@@ -272,4 +275,7 @@ import Layout from '../../layouts/Layout.astro';
 
     initVditor();
   </script>
+ <script>
+    import "../../scripts/admin-core.ts";
+ </script>
 </Layout>

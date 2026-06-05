@@ -109,6 +109,84 @@ window.deletePhoto = async (albumID: string, filename: string) => {
     if (res.ok) refreshPhotoGrid(albumID);
 };
 
+// --- 封面图选择器 ---
+window.openCoverPicker = (targetInputId: string) => {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#25262b] p-0 w-full max-w-2xl backdrop:bg-black/50';
+    dialog.innerHTML = `
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-bold">选择封面图</h4>
+                <button id="cover-picker-close" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">✕</button>
+            </div>
+            <div id="cover-picker-content" class="overflow-y-auto max-h-[55vh] space-y-4">
+                <p class="text-center text-gray-400 py-8">加载中...</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    const closeBtn = dialog.querySelector('#cover-picker-close');
+    const content = dialog.querySelector('#cover-picker-content');
+    const close = () => { dialog.close(); dialog.remove(); };
+    closeBtn?.addEventListener('click', close);
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+
+    (async () => {
+        try {
+            const res = await authFetch('/api/admin/albums');
+            const albums = await res.json();
+            if (!albums.length) {
+                content!.innerHTML = '<p class="text-center text-gray-400 py-8">暂无相册，请先创建相册并上传图片</p>';
+                return;
+            }
+            let html = '';
+            for (const album of albums) {
+                html += '<details class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden mb-3">' +
+                    '<summary class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer font-medium text-sm">' +
+                    (album.info.title || album.id) + ' <span class="text-gray-400 ml-2">' + album.id + '</span>' +
+                    '</summary><div class="p-3" id="album-' + album.id + '">' +
+                    '<p class="text-sm text-gray-400">加载中...</p></div></details>';
+            }
+            content!.innerHTML = html;
+
+            for (const album of albums) {
+                try {
+                    const fRes = await authFetch('/api/admin/albums/' + album.id + '/files');
+                    const files = await fRes.json();
+                    const container = content!.querySelector('#album-' + album.id);
+                    if (!container) continue;
+                    if (!files.length) {
+                        container.innerHTML = '<p class="text-sm text-gray-400">暂无图片</p>';
+                        continue;
+                    }
+                    let gridHtml = '<div class="grid grid-cols-3 md:grid-cols-4 gap-2">';
+                    for (const f of files) {
+                        gridHtml += '<div class="aspect-square rounded-lg overflow-hidden border dark:border-gray-700 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all bg-gray-100" data-url="/images/albums/' + album.id + '/' + f + '">' +
+                            '<img src="/images/albums/' + album.id + '/' + f + '" class="w-full h-full object-cover" loading="lazy" onerror="this.parentElement.remove()" /></div>';
+                    }
+                    gridHtml += '</div>';
+                    container.innerHTML = gridHtml;
+                    container.querySelectorAll('[data-url]').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const url = el.getAttribute('data-url')!;
+                            const input = document.getElementById(targetInputId) as HTMLInputElement;
+                            if (input) input.value = url;
+                            close();
+                        });
+                    });
+                } catch {
+                    const c2 = content!.querySelector('#album-' + album.id);
+                    if (c2) c2.innerHTML = '<p class="text-sm text-red-400">加载失败</p>';
+                }
+            }
+        } catch {
+            content!.innerHTML = '<p class="text-center text-red-400 py-8">加载相册失败</p>';
+        }
+    })();
+};
+
 // --- 内部数据变量 ---
 let diaryUploadedImages: string[] = [];
 
