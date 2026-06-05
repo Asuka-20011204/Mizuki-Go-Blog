@@ -21,6 +21,8 @@ import (
 const postsBaseDir = "../frontend/src/content/posts"
 const previewDir = "../frontend/public/preview-cache"
 
+var previewCacheRe = regexp.MustCompile(`/preview-cache/([^\s\)]+)`)
+
 type PostService struct {
 	DB *gorm.DB
 }
@@ -64,25 +66,28 @@ draft: false
 
 %s`
 
-	// 使用清洗后的 cleanBody
-	fullContent := fmt.Sprintf(mdTemplate, req.Title, publishedDate, req.Description, req.Image, formattedTags, req.Category, req.Pinned, req.Lang, cleanBody)
 	// 确保文章目录存在 (index.md 模式)
 	postDir := filepath.Join(postsBaseDir, req.Slug)
 	if err := os.MkdirAll(postDir, 0755); err != nil {
 		return fmt.Errorf("创建目录失败: %v", err)
 	}
+
 	// 把正文中引用的图片从 preview-cache 搬到文章目录
-	re := regexp.MustCompile(`/preview-cache/([^\s\)]+)`)
-	matches := re.FindAllStringSubmatch(req.Content, -1)
-	for _, m := range matches {
-		srcFile := filepath.Join(previewDir, m[1])
-		dstFile := filepath.Join(postDir, m[1])
+	for _, m := range previewCacheRe.FindAllStringSubmatch(req.Content, -1) {
+		fileName := filepath.Base(filepath.Clean(m[1]))
+		srcFile := filepath.Join(previewDir, fileName)
+		dstFile := filepath.Join(postDir, fileName)
 		if _, err := os.Stat(srcFile); err == nil {
-			s.copyFile(srcFile, dstFile)
+			if err := s.copyFile(srcFile, dstFile); err != nil {
+				return fmt.Errorf("迁移图片失败 %s: %w", fileName, err)
+			}
 		}
 	}
 	// 图片搬完之后，把正文中的 /preview-cache/ 替换为 ./
 	cleanBody = strings.ReplaceAll(cleanBody, "/preview-cache/", "./")
+
+	// 使用清洗后的 cleanBody 生成最终内容
+	fullContent := fmt.Sprintf(mdTemplate, req.Title, publishedDate, req.Description, req.Image, formattedTags, req.Category, req.Pinned, req.Lang, cleanBody)
 	savePath := filepath.Join(postDir, "index.md")
 	if err := os.WriteFile(savePath, []byte(fullContent), 0644); err != nil {
 		return fmt.Errorf("写入 MD 文件失败: %v", err)
@@ -115,7 +120,7 @@ func (s *PostService) DeletePost(slug string) error {
 	return s.DB.Unscoped().Where("slug = ?", slug).Delete(&models.Post{}).Error
 }
 
-// 5. 保存资源 (图片) - 保持你原有的预览逻辑
+// 5. 保存资源 (图片)
 func (s *PostService) SavePostResource(slug string, file *multipart.FileHeader, isCover bool) (string, error) {
 	ext := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + ext

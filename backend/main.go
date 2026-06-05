@@ -101,10 +101,12 @@ func main() {
 		}
 
 		// 2. 尝试托管 frontend/dist 下的静态文件
-		staticRoot := filepath.Join("..", "frontend", "dist")
-		requestedPath := filepath.Join(staticRoot, filepath.Clean(path))
+		staticRoot, _ := filepath.Abs(filepath.Join("..", "frontend", "dist"))
+		// 去掉路径开头的分隔符，确保是相对路径，防止 filepath.Join 丢弃 staticRoot
+		cleanPath := strings.TrimLeft(filepath.Clean(path), "/\\")
+		requestedPath := filepath.Join(staticRoot, cleanPath)
 		// 安全检查：确保不越出 staticRoot
-		if !strings.HasPrefix(requestedPath, staticRoot) {
+		if !strings.HasPrefix(requestedPath, staticRoot+string(filepath.Separator)) && requestedPath != staticRoot {
 			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
