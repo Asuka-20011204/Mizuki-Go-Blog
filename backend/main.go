@@ -79,7 +79,7 @@ func main() {
 	r.POST("/api/login", middleware.RateLimit(5, time.Minute), authCtrl.Login)
 	// 管理接口组
 	admin := r.Group("/api/admin")
-	admin.Use(middleware.JWTAuth())
+	admin.Use(middleware.JWTAuth(db))
 	{
 		admin.POST("/posts", postCtrl.HandleCreatePost)
 		admin.POST("/upload", postCtrl.HandleUpload)

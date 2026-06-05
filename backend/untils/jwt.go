@@ -9,22 +9,23 @@ import (
 )
 
 type Claims struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+	UserID       uint   `json:"user_id"`
+	Username     string `json:"username"`
+	Role         string `json:"role"`
+	TokenVersion int    `json:"token_version"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken 根据用户信息签发 Token
-func GenerateToken(userID uint, username, role string) (string, error) {
+func GenerateToken(userID uint, username, role string, tokenVersion int) (string, error) {
 	conf := config.GlobalConfig.JWT
 
 	claims := Claims{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
+		UserID:       userID,
+		Username:     username,
+		Role:         role,
+		TokenVersion: tokenVersion,
 		RegisteredClaims: jwt.RegisteredClaims{
-			// 从配置文件读取过期时间
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(conf.Expire) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
@@ -32,7 +33,6 @@ func GenerateToken(userID uint, username, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// 从配置文件读取密钥
 	return token.SignedString([]byte(conf.Secret))
 }
 

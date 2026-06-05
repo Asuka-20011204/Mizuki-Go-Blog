@@ -98,5 +98,9 @@ func (s *UserService) ChangePassword(userID uint, req models.ChangePasswordReque
 		return errors.New("密码加密失败")
 	}
 
-	return s.DB.Model(&user).Update("password", string(hashedPassword)).Error
+	// 同时更新密码和自增 token 版本号（使旧 token 全部失效）
+	return s.DB.Model(&user).Updates(map[string]interface{}{
+		"password":      string(hashedPassword),
+		"token_version": gorm.Expr("token_version + 1"),
+	}).Error
 }

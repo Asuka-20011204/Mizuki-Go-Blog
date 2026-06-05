@@ -28,7 +28,7 @@ func (s *AuthService) Authenticate(account, password string) (string, *models.Us
 	}
 
 	// 生成 JWT
-	token, err := utils.GenerateToken(user.ID, user.Username, user.Role)
+	token, err := utils.GenerateToken(user.ID, user.Username, user.Role, user.TokenVersion)
 	if err != nil {
 		return "", nil, errors.New("生成令牌失败")
 	}
