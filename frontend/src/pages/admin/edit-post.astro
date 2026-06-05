@@ -50,9 +50,9 @@ import Layout from '../../layouts/Layout.astro';
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-500 mb-1">封面图 URL</label>
-            <div class="flex gap-2">
-              <input type="text" id="post-image" class="flex-1 p-2 border border-slate-200 rounded-lg outline-none" />
-              <button type="button" onclick="window.openCoverPicker('post-image')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm whitespace-nowrap transition">相册选择</button>
+            <div class="relative">
+              <input type="text" id="post-image" placeholder="选择相册图片或输入地址" class="w-full p-2 pr-24 border border-slate-200 rounded-lg outline-none" />
+              <button type="button" onclick="window.openCoverPicker('post-image')" class="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 border border-slate-200 dark:border-slate-600 rounded text-xs whitespace-nowrap hover:bg-gray-50 dark:hover:bg-gray-800 transition opacity-60 hover:opacity-100">浏览相册</button>
             </div>
           </div>
           <div>

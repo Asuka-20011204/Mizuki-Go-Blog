@@ -70,9 +70,9 @@ import Layout from '../../layouts/Layout.astro';
             </div>
             <div>
               <label class="block text-sm font-medium mb-1 opacity-60">封面图 URL</label>
-              <div class="flex gap-2">
-                <input type="text" id="post-image" placeholder="/images/cover.jpg" class="flex-1 px-4 py-2 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
-                <button type="button" onclick="window.openCoverPicker('post-image')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm whitespace-nowrap transition">相册选择</button>
+              <div class="relative">
+                <input type="text" id="post-image" placeholder="选择相册图片或输入地址" class="w-full px-4 py-2 pr-24 rounded-lg border dark:bg-slate-800 dark:border-slate-700" />
+                <button type="button" onclick="window.openCoverPicker('post-image')" class="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 border dark:border-slate-600 rounded-lg text-xs whitespace-nowrap hover:bg-gray-50 dark:hover:bg-gray-800 transition opacity-60 hover:opacity-100">浏览相册</button>
               </div>
             </div>
             <div>
