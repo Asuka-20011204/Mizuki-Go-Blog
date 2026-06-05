@@ -37,6 +37,20 @@ backend/config.yaml
 *.session.sql
 
 # =====================
+# Node / Frontend
+# =====================
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+
+# =====================
+# Astro
+# =====================
+frontend/.astro/
+frontend/dist/
+frontend/public/preview-cache/
+
+# =====================
 # Go (Backend)
 # =====================
 *.exe
@@ -47,23 +61,32 @@ backend/config.yaml
 *.test
 *.out
 *.prof
+backend/my-blog-backend
 backend/tmp/
 backend/bin/
 vendor/
 
 # =====================
-# Vercel
-# =====================
-.vercel
-
-# =====================
 # Logs
 # =====================
+logs/
+backend/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# =====================
+# Runtime Data (user-generated)
+# =====================
+backend/data/
+backend/diary_data/
+
+# =====================
+# Vercel
+# =====================
+.vercel
 
 # =====================
 # Backup & Temp
@@ -86,7 +109,7 @@ temp/
 *.7z
 
 # =====================
-# Lock files (generated)
+# Lock files (only keep pnpm-lock.yaml)
 # =====================
 package-lock.json
 yarn.lock

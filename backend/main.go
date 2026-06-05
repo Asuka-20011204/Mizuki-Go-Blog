@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"my-blog-backend/config"
 	"my-blog-backend/controller"
+	"my-blog-backend/logger"
 	"my-blog-backend/middleware"
 	"my-blog-backend/models"
 	"my-blog-backend/service"
@@ -22,11 +22,17 @@ func main() {
 	// 1. 加载配置
 	config.LoadConfig("config.yaml")
 
+	// 1.5. 初始化日志
+	if err := logger.Init(config.GlobalConfig.Log.Dir, config.GlobalConfig.Log.Level); err != nil {
+		fmt.Printf("日志初始化失败: %v\n", err)
+		os.Exit(1)
+	}
+
 	// 2. 使用配置连接数据库
 	dsn := config.GlobalConfig.Database.Dsn
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("数据库连接失败: %v", err)
+		logger.Fatal("数据库连接失败", "error", err)
 	}
 
 	// 3. 初始化数据 (包含创建初始用户)
@@ -53,8 +59,11 @@ func main() {
 	configCtrl := &controller.ConfigController{ConfigService: configService}
 	userCtrl := &controller.UserController{UserService: userService}
 	// 3. 设置 Gin 路由
-	r := gin.Default()
+	r := gin.New()
 	r.RedirectTrailingSlash = false
+
+	// 自定义 Gin 中间件：Logger（输出到文件） + Recovery
+	r.Use(logger.GinLogger(), gin.Recovery())
 
 	// 配置 CORS 跨域
 	r.Use(corsMiddleware())
@@ -138,9 +147,9 @@ func main() {
 	r.Static("/preview-cache", "../frontend/public/preview-cache")
 
 	// 4. 启动服务器
-	log.Printf("Go 后端 MVC 服务已启动，监听端口 :%d", config.GlobalConfig.Server.Port)
+	logger.Info("Go 后端 MVC 服务已启动", "port", config.GlobalConfig.Server.Port)
 	if err := r.Run(fmt.Sprintf(":%d", config.GlobalConfig.Server.Port)); err != nil {
-		log.Fatalf("服务启动失败: %v", err)
+		logger.Fatal("服务启动失败", "error", err)
 	}
 }
 

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"log/slog"
 	"my-blog-backend/config"
+	"my-blog-backend/logger"
 	"my-blog-backend/models"
 	"os"
 	"path/filepath"
@@ -46,7 +46,7 @@ func (s *DashboardService) GetStats() (StatsResult, error) {
 
 	// 4. 统计总字数 (遍历所有 index.md 物理文件统计最准确)
 	stats.TotalWords = s.calculateTotalWords()
-	slog.Info("获取文章状态成功！", "stats", stats)
+	logger.Info("获取文章状态成功！", "stats", stats)
 
 	return stats, nil
 }

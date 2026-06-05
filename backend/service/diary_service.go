@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"my-blog-backend/config"
+	"my-blog-backend/logger"
 	"my-blog-backend/models"
 	"os"
 	"path/filepath"
@@ -19,19 +19,19 @@ func (s *DiaryService) GetDiaries() ([]models.DiaryItem, error) {
 
 	// 如果文件不存在，返回空数组而不是报错
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		slog.Warn("数组为空")
+		logger.Warn("数组为空")
 		return []models.DiaryItem{}, nil
 	}
 
 	content, err := os.ReadFile(path)
 	if err != nil {
-		slog.Error("读取文件失败", "error", err)
+		logger.Error("读取文件失败", "error", err)
 		return nil, err
 	}
 
 	var diaries []models.DiaryItem
 	if err := json.Unmarshal(content, &diaries); err != nil {
-		slog.Error("解析json文件失败", "error", err)
+		logger.Error("解析json文件失败", "error", err)
 		return nil, fmt.Errorf("JSON 数据损坏: %v", err)
 	}
 	return diaries, nil
@@ -67,15 +67,15 @@ func (s *DiaryService) SaveDiary(req models.DiaryRequest) error {
 	//  持久化到后端自己的 JSON
 	jsonData, _ := json.MarshalIndent(diaries, "", "  ")
 	if err := os.WriteFile(config.GlobalConfig.System.DiaryJsonPath, jsonData, 0644); err != nil {
-		slog.Error("写入json文件失败", "error", err)
+		logger.Error("写入json文件失败", "error", err)
 		return err
 	}
 	err = s.SyncToFrontend(diaries)
 	if err != nil {
-		slog.Error("写回前端日记ts数据文件失败", "error", err)
+		logger.Error("写回前端日记ts数据文件失败", "error", err)
 		return err
 	}
-	slog.Info("日记保存成功,日记ID", "id", newID)
+	logger.Info("日记保存成功,日记ID", "id", newID)
 	return nil
 }
 

@@ -1,8 +1,8 @@
 package models
 
 import (
-	"log"
 	"my-blog-backend/config"
+	"my-blog-backend/logger"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -16,7 +16,7 @@ func InitDatabase(db *gorm.DB) {
 	var count int64
 	db.Model(&User{}).Count(&count)
 	if count == 0 {
-		log.Println("正在初始化默认所有者账号...")
+		logger.Info("正在初始化默认所有者账号...")
 
 		conf := config.GlobalConfig.InitData
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(conf.OwnerPassword), bcrypt.DefaultCost)
@@ -36,8 +36,8 @@ func InitDatabase(db *gorm.DB) {
 		}
 
 		if err := db.Create(&owner).Error; err != nil {
-			log.Fatalf("初始化所有者失败: %v", err)
+			logger.Fatal("初始化所有者失败", "error", err)
 		}
-		log.Println("所有者账号初始化成功！")
+		logger.Info("所有者账号初始化成功！")
 	}
 }

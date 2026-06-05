@@ -13,7 +13,13 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	JWT      JWTConfig      `yaml:"jwt"`
 	System   SystemConfig   `yaml:"system"`
+	Log      LogConfig      `yaml:"log"`
 	InitData InitDataConfig `yaml:"init_data"`
+}
+
+type LogConfig struct {
+	Dir   string `yaml:"dir"`   // 日志文件目录，如 "./logs"
+	Level string `yaml:"level"` // debug / info / warn / error
 }
 
 type ServerConfig struct {

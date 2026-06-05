@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"my-blog-backend/logger"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +35,6 @@ func (s *SystemService) RebuildProject() error {
 		return fmt.Errorf("构建失败: %v\n输出: %s", err, string(output))
 	}
 
-	fmt.Println("重构成功:", string(output))
+	logger.Info("前端重构成功", "output_size", len(output))
 	return nil
 }
