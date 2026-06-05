@@ -1,49 +1,48 @@
+# 关于我
 
-This website is built with the **Astro** framework using the [Mizuki](https://github.com/matsuzaka-yuki/mizuki) theme.
+你好，我是 鲨鲨Don't。
+
+目前还在上大学，主要使用 **Go语言** 。喜欢折腾莫名其妙的东西。
+
+> 不可思议
+
+## 关于本站
+
+本站基于 [Mizuki](https://github.com/matsuzaka-yuki/mizuki) 主题搭建，前端框架为 **Astro**。Mizuki 原本是一个纯前端的博客主题，没有后端和管理后台。
 
 ::github{repo="matsuzaka-yuki/Mizuki"}
 
-## 🌟 Theme Features
+我对前端进行了大量个性化修改，包括但不限于：页面布局调整、样式重写、新增管理后台页面（文章编辑器、日记管理、相册管理、站点配置、用户管理等），以及移动端适配优化。
 
-### 🎨 Design & User Experience
-- **Modern & Elegant Design** - Clean, minimalist interface with beautiful typography
-- **Fully Responsive** - Optimized for all devices from mobile to desktop
-- **Dark/Light Mode** - Automatic theme switching with smooth transitions
-- **Beautiful Typography** - Enhanced readability with JetBrains Mono font
-- **Smooth Animations** - Fluid page transitions and interactive elements
+在此基础上，我**从零开发了 Go 语言后端**，采用 MVC 分层架构（Gin + GORM + MySQL），为博客提供了完整的内容管理能力：
 
-### 🔍 Content & Search
-- **Advanced Search** - Powered by [Pagefind](https://pagefind.app/) for fast, accurate results
-- **Enhanced Markdown** - Extended syntax with code highlighting and math support
-- **Interactive Table of Contents** - Auto-scroll navigation for long articles
-- **RSS Feed Generation** - Stay updated with automatic feed generation
-- **Reading Time Estimation** - Know how long articles take to read
-- **Post Categorization** - Organize content with tags and categories
+- **文章管理**：Markdown 编辑器 + Frontmatter 解析，MySQL 与文件系统双写
+- **日记/碎碎念**：JSON 文件存储，自动同步前端 TypeScript 数据文件
+- **相册管理**：文件系统级增删改查，支持封面设置
+- **站点配置**：可视化编辑全部主题设置
+- **用户权限**：JWT 认证 + owner/admin 两级角色，支持多人协作
+- **安全加固**：路径穿越防护、登录限流、JWT 吊销、文件类型校验、安全响应头
 
+最终形成了一套完整的前后端分离博客系统，前端 Astro 静态生成，后端 Go 提供 API 和管理能力。
 
+## 技术栈
 
-### 📱 Special Pages
-- **Anime Tracking Page** - Track your anime watching progress with ratings
-- **Friends Links Page** - Showcase friend websites with beautiful cards
-- **Diary/Moments Page** - Share life moments like social media posts
-- **Archive Page** - Organized timeline view of all posts
-- **About Page** - Customizable personal introduction (this page!)
+- **前端框架**：Astro + Tailwind CSS + TypeScript
+- **后端框架**：Go + Gin + GORM
+- **数据库**：MySQL
+- **编辑器**：Vditor（Markdown）
+- **认证**：JWT（golang-jwt）
 
-### 🛠 Technical Features
-- **Enhanced Code Blocks** - Powered by [Expressive Code](https://expressive-code.com/)
-- **Math Support** - LaTeX rendering with KaTeX for mathematical expressions
-- **Image Optimization** - PhotoSwipe gallery with lazy loading
-- **SEO Optimized** - Built-in sitemap and meta tags for better search visibility
-- **Performance Optimized** - Fast loading with caching and optimization
-- **Comment System Ready** - Integration support for Twikoo comments
+## 项目仓库
 
-### 🎯 Advanced Markdown Features
-- **Callouts & Admonitions** - Beautiful info boxes with `> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`
-- **Mathematical Equations** - Write LaTeX math with `$inline$` and `$$block$$` syntax
-- **GitHub Cards** - Embed repository cards with `::github{repo="user/repo"}`
-- **Syntax Highlighting** - Advanced code highlighting with line numbers
-- **Copy Code Buttons** - Easy code copying functionality
+::github{repo="Asuka-20011204/Mizuki-Go-Blog"}
 
----
+## 联系方式
 
-*Built with ❤️ using Astro and inspired by modern web design principles.*
+- GitHub：[Asuka-20011204](https://github.com/Asuka-20011204)
+- Bilibili：[鲨鲨Don&#39;t](https://space.bilibili.com/479044184)
+- Gitee：[Asuka20011204](https://gitee.com/Asuka20011204)
+
+## 致谢
+
+感谢 [matsuzaka-yuki](https://github.com/matsuzaka-yuki) 开发了 Mizuki 主题，让我能在这个基础上加入自己的想法。
