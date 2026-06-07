@@ -105,7 +105,12 @@
       "useJapaneseBadge": true
     },
     "generateOgImages": false,
-    "favicon": [],
+    "favicon": [
+      {
+        "sizes": "32x32",
+        "src": "/favicon/favicon.ico"
+      }
+    ],
     "font": {
       "asciiFont": {
         "fontFamily": "ZenMaruGothic-Medium",

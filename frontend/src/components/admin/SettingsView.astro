@@ -38,6 +38,11 @@ import { Icon } from 'astro-icon/components';
                 <label class="flex items-center gap-2 text-sm"><span>主题色相 (0-360):</span><input type="number" id="cfg-theme-hue" min="0" max="360" class="w-20 p-1.5 rounded-lg border dark:bg-gray-800" /></label>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="cfg-theme-fixed" class="accent-blue-500" /> 固定主题色</label>
             </div>
+            <div class="mt-4">
+                <label class="text-xs font-medium text-gray-500">网站图标 (Favicon URL)</label>
+                <input id="cfg-favicon-src" placeholder="/favicon/icon.png" class="w-full md:w-1/2 p-2 rounded-lg border dark:bg-gray-800" />
+                <p class="text-xs text-gray-400 mt-1">将图标文件放到 public/favicon/ 目录下，填写路径即可</p>
+            </div>
         </div>
 
         <!-- 2. 页面开关（不可折叠） -->

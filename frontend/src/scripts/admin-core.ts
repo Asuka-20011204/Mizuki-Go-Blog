@@ -691,15 +691,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 退出登录
-    const logoutBtn = document.getElementById('logout-btn');
-    logoutBtn?.addEventListener('click', () => {
+    // 退出登录（侧边栏和顶栏各一个按钮，ID 不同）
+    const handleLogout = () => {
         if (confirm('确定要退出管理系统吗？')) {
             localStorage.removeItem('mizuki_token');
             localStorage.removeItem('mizuki_user');
             window.location.href = '/admin/login/';
         }
-    });
+    };
+    document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+    document.getElementById('header-logout-btn')?.addEventListener('click', handleLogout);
 
     // 初始加载当前激活的 tab
     const activeTab = document.querySelector('.nav-item.active')?.getAttribute('data-tab');
@@ -778,6 +779,8 @@ function populateConfigForm(cfg: FullConfig) {
     setValue('cfg-site-start-date', s.siteStartDate?.split('T')[0] || '');
     setValue('cfg-theme-hue', s.themeColor?.hue ?? 230);
     setChecked('cfg-theme-fixed', s.themeColor?.fixed ?? false);
+    const favList = s.favicon as any[];
+    setValue('cfg-favicon-src', favList?.length > 0 ? favList[0].src : '');
     setValue('cfg-timezone', s.timeZone ?? 8);
     setValue('cfg-lang', s.lang ?? 'zh_CN');
 
@@ -982,6 +985,10 @@ function collectConfigData(): FullConfig {
     s.timeZone = parseInt(getValue('cfg-timezone')) || 8;
     s.lang = getValue('cfg-lang');
     s.themeColor = { hue: parseInt(getValue('cfg-theme-hue')) || 230, fixed: getChecked('cfg-theme-fixed') };
+
+    // favicon
+    const favSrc = getValue('cfg-favicon-src').trim();
+    (s as any).favicon = favSrc ? [{ src: favSrc, sizes: '32x32' }] : [];
 
     // 特色页面
     s.featurePages = {
