@@ -2,7 +2,7 @@
 <div id="albums-view" class="tab-content hidden">
     <div class="flex justify-between mb-6">
         <h3 class="text-xl font-bold dark:text-gray-100 text-slate-800">相册媒体管理</h3>
-        <button id="new-album-btn" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg">
+        <button id="new-album-btn" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">
             + 新建相册
         </button>
     </div>
@@ -15,7 +15,7 @@
 <!-- 创建相册对话框 -->
 <dialog id="album-dialog" class="rounded-2xl p-6 bg-white dark:bg-[#25262b] shadow-2xl border-none w-full max-w-lg">
     <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-gray-100 flex items-center gap-2">
-        <span class="w-2 h-6 bg-orange-500 rounded-full"></span>
+        <span class="w-2 h-6 bg-blue-600 rounded-full"></span>
         创建新相册
     </h3>
 
@@ -23,27 +23,27 @@
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册 ID (文件夹名)</label>
-                <input type="text" id="album-id" placeholder="e.g. travel-2024" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                <input type="text" id="album-id" placeholder="e.g. travel-2024" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册标题</label>
-                <input type="text" id="album-title" placeholder="显示在页面的名称" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                <input type="text" id="album-title" placeholder="显示在页面的名称" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition" />
             </div>
         </div>
 
         <div>
             <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">相册描述</label>
-            <textarea id="album-desc" placeholder="简短介绍这个相册..." rows="2" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition"></textarea>
+            <textarea id="album-desc" placeholder="简短介绍这个相册..." rows="2" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">日期</label>
-                <input type="date" id="album-date" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                <input type="date" id="album-date" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">拍摄地点</label>
-                <input type="text" id="album-location" placeholder="e.g. 日本, 东京" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+                <input type="text" id="album-location" placeholder="e.g. 日本, 东京" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition" />
             </div>
         </div>
 
@@ -63,18 +63,18 @@
 
         <div>
             <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">标签 (逗号分隔)</label>
-            <input type="text" id="album-tags" placeholder="旅行, 生活, 摄影" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-orange-500 transition" />
+            <input type="text" id="album-tags" placeholder="旅行, 生活, 摄影" class="w-full p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-blue-500 transition" />
         </div>
 
         <div class="flex items-center gap-2 pt-2">
-            <input type="checkbox" id="album-hidden" class="w-4 h-4 accent-orange-500" />
+            <input type="checkbox" id="album-hidden" class="w-4 h-4 accent-blue-500" />
             <label for="album-hidden" class="text-sm font-medium text-gray-600 dark:text-gray-400">不在列表页公开显示 (隐藏相册)</label>
         </div>
     </div>
 
     <div class="flex justify-end gap-3 mt-8">
         <button onclick="document.getElementById('album-dialog').close()" class="px-6 py-2 text-gray-500 hover:text-gray-700 transition font-medium">取消</button>
-        <button id="confirm-create-album" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition">
+        <button id="confirm-create-album" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition">
             创建相册
         </button>
     </div>

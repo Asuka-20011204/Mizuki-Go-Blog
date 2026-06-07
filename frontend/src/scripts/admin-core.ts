@@ -1,3 +1,35 @@
+// --- Toast 通知 (替换 alert) ---
+function showToast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
+    const container = document.getElementById('toast-container') || (() => {
+        const el = document.createElement('div');
+        el.id = 'toast-container';
+        el.className = 'fixed top-4 right-4 z-[999] flex flex-col gap-2';
+        document.body.appendChild(el);
+        return el;
+    })();
+
+    const colors: Record<string, string> = {
+        success: 'bg-green-600',
+        error: 'bg-red-500',
+        info: 'bg-blue-600',
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `${colors[type]} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-all duration-300 opacity-0 translate-x-4`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-x-4');
+    });
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+window.showToast = showToast;
+
 // 封装认证请求
 async function authFetch(url: string, options: RequestInit = {}) {
     const token = localStorage.getItem('mizuki_token');
@@ -355,7 +387,7 @@ async function triggerRebuild() {
     const originalText = rebuildBtn.innerHTML;
     rebuildBtn.disabled = true;
     rebuildBtn.innerHTML = `<span>构建中...</span>`;
-    rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
+    rebuildBtn.classList.replace('bg-blue-600', 'bg-gray-400');
 
     try {
         const res = await authFetch('/api/admin/rebuild', { method: 'POST' });
@@ -372,7 +404,7 @@ async function triggerRebuild() {
     } finally {
         rebuildBtn.disabled = false;
         rebuildBtn.innerHTML = originalText;
-        rebuildBtn.classList.replace('bg-gray-500', 'bg-green-500');
+        rebuildBtn.classList.replace('bg-gray-400', 'bg-blue-600');
     }
 }
 
@@ -674,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalText = rebuildBtn.innerHTML;
         rebuildBtn.disabled = true;
         rebuildBtn.innerHTML = `<span>构建中...</span>`;
-        rebuildBtn.classList.replace('bg-green-500', 'bg-gray-500');
+        rebuildBtn.classList.replace('bg-blue-600', 'bg-gray-400');
         try {
             const res = await authFetch('/api/admin/rebuild', { method: 'POST' });
             if (res.ok) alert("项目重构成功！新静态内容已同步。");
@@ -687,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             rebuildBtn.disabled = false;
             rebuildBtn.innerHTML = originalText;
-            rebuildBtn.classList.replace('bg-gray-500', 'bg-green-500');
+            rebuildBtn.classList.replace('bg-gray-400', 'bg-blue-600');
         }
     });
 
